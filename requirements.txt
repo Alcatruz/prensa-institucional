@@ -1,0 +1,8 @@
+playwright>=1.40
+requests>=2.31
+beautifulsoup4>=4.12
+aiohttp>=3.9
+openpyxl>=3.1
+pandas>=2.0
+matplotlib>=3.8
+pillow>=10.0
