@@ -26,6 +26,15 @@
 !/scrapers/scraper_consejo_transparencia.py
 !/scrapers/scraper_senado.py
 !/scrapers/scraper_camara_diputados.py
+!/scrapers/scraper_seguridad.py
+!/scrapers/scraper_presidencia.py
+!/scrapers/scraper_sag.py
+!/scrapers/scraper_indap.py
+!/scrapers/scraper_sec.py
+!/scrapers/scraper_junaeb.py
+!/scrapers/ministros_gabinete.py
+!/scrapers/fusionar_respaldo.py
+!/scrapers/cobertura_por_gobierno.py
 !/scrapers/run_todos_paralelo.py
 !/scrapers/consolidar_prensa.py
 

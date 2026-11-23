@@ -44,10 +44,16 @@ FUENTES = [
     ("interior", "Interior", "ejecutivo"),
     ("minagri", "Agricultura", "ejecutivo"),
     ("midesof", "Desarrollo Social y Familia", "ejecutivo"),
+    ("seguridad", "Seguridad Pública", "ejecutivo"),
+    ("presidencia", "Presidencia", "ejecutivo"),
+    ("sag", "SAG", "ejecutivo"),
+    ("indap", "INDAP", "ejecutivo"),
+    ("sec", "SEC", "ejecutivo"),
+    ("junaeb", "Junaeb", "ejecutivo"),
 ]
 
 GRUPOS = {
-    "ejecutivo": ("Ministerios y subsecretarías", "#2a78d6"),
+    "ejecutivo": ("Presidencia, ministerios y servicios", "#2a78d6"),
     "otros": ("Otros organismos públicos", "#eb6834"),
     "congreso": ("Congreso Nacional", "#1baf7a"),
 }
@@ -66,7 +72,17 @@ PASO = 2             # meses por cuadro
 PAUSA_FINAL = 30     # cuadros congelados al final
 FPS = 12
 
-COLS, FILAS = 5, 3
+COLS, FILAS = 5, 4
+ANCHO, ALTO = 12, 9.4    # pulgadas; ~2 pulgadas por fila de paneles
+
+
+def arriba(pulg: float) -> float:
+    """Posición vertical (fracción de la figura) a `pulg` pulgadas del borde superior."""
+    return 1 - pulg / ALTO
+
+
+def abajo(pulg: float) -> float:
+    return pulg / ALTO
 
 
 def miles(n: int) -> str:
@@ -123,21 +139,21 @@ def main():
             c[x_de[p]] = v
         s["acum"] = np.cumsum(c)
 
-    fig = plt.figure(figsize=(12, 7.4), dpi=100, facecolor=SUPERFICIE)
-    gs = fig.add_gridspec(FILAS, COLS, left=0.045, right=0.985, top=0.80, bottom=0.07,
+    fig = plt.figure(figsize=(ANCHO, ALTO), dpi=100, facecolor=SUPERFICIE)
+    gs = fig.add_gridspec(FILAS, COLS, left=0.045, right=0.985, top=arriba(1.48), bottom=abajo(0.52),
                           hspace=0.55, wspace=0.12)
 
-    fig.text(0.045, 0.945, "Prensa institucional del Estado de Chile", fontsize=17,
+    fig.text(0.045, arriba(0.41), "Prensa institucional del Estado de Chile", fontsize=17,
              fontweight="semibold", color=TINTA, ha="left", va="baseline")
-    fig.text(0.045, 0.905, f"Notas publicadas por mes y organismo (media móvil de {VENTANA} meses, "
+    fig.text(0.045, arriba(0.70), f"Notas publicadas por mes y organismo (media móvil de {VENTANA} meses, "
              "misma escala en todos los paneles)", fontsize=10.5, color=TINTA_2, ha="left", va="baseline")
-    txt_fecha = fig.text(0.985, 0.94, "", fontsize=22, fontweight="semibold", color=TINTA,
+    txt_fecha = fig.text(0.985, arriba(0.44), "", fontsize=22, fontweight="semibold", color=TINTA,
                          ha="right", va="baseline")
-    txt_total = fig.text(0.985, 0.905, "", fontsize=10.5, color=TINTA_2, ha="right", va="baseline")
+    txt_total = fig.text(0.985, arriba(0.70), "", fontsize=10.5, color=TINTA_2, ha="right", va="baseline")
 
     claves = [Line2D([0], [0], color=col, lw=2.2, solid_capstyle="round") for _, col in GRUPOS.values()]
     fig.legend(claves, [nom for nom, _ in GRUPOS.values()], loc="upper left", ncol=3,
-               bbox_to_anchor=(0.04, 0.89), frameon=False, fontsize=9.5, labelcolor=TINTA_2,
+               bbox_to_anchor=(0.04, arriba(0.81)), frameon=False, fontsize=9.5, labelcolor=TINTA_2,
                handlelength=1.6, columnspacing=1.8)
 
     xt = [x_de[pd.Period(f"{a}-01", "M")] for a in range(2006, 2027, 4)]
@@ -171,10 +187,10 @@ def main():
         punto, = ax.plot([], [], "o", color=col, ms=6, mec=SUPERFICIE, mew=1.5, zorder=4)
         artistas.append(dict(ax=ax, linea=linea, punto=punto, txt_n=txt_n, col=col, area=None, s=s))
 
-    fig.text(0.045, 0.012, "La cifra de cada panel es el total acumulado de notas. "
+    fig.text(0.045, abajo(0.09), "La cifra de cada panel es el total acumulado de notas. "
              "El último mes extraído, si está incompleto, no se dibuja.",
              fontsize=8, color=TINTA_MUTED, ha="left", va="bottom")
-    fig.text(0.985, 0.012, "Fuente: salas de prensa de cada organismo. Elaboración propia.",
+    fig.text(0.985, abajo(0.09), "Fuente: salas de prensa de cada organismo. Elaboración propia.",
              fontsize=8, color=TINTA_MUTED, ha="right", va="bottom")
 
     idx = list(range(0, len(meses), PASO))

@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Orquestador: corre en paralelo todos los scrapers de PRENSA INSTITUCIONAL.
+Orquestador: corre en paralelo los scrapers de prensa (Ejecutivo, otros organismos y Congreso).
 
 - Pool de concurrencia configurable (--jobs, por defecto 4) para no saturar
   la maquina con demasiados Chromium a la vez.
 - Cada scraper escribe su propio CSV en data/<nombre>.csv (diseno existente).
+- Antes de correr cada scraper se copia su CSV a data/_respaldo_<fecha>/ y al
+  terminar se une con esa copia por URL. Asi no se pierden las notas que un
+  sitio deja de mostrar ni lo descargado si un scraper falla a medio camino.
 - Salida (stdout+stderr) de cada scraper -> logs/<nombre>.log (UTF-8).
 - Estado en vivo -> logs/_status.json ; resumen final por consola.
 
@@ -17,19 +20,29 @@ import argparse
 import csv
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
+
+from fusionar_respaldo import fusionar
 
 ROOT = Path(__file__).resolve().parent.parent
 LOGS = ROOT / "logs"
 DATA = ROOT / "data"
 STATUS = LOGS / "_status.json"
+RESPALDO = DATA / f"_respaldo_{date.today().isoformat()}"
 
-# (nombre, script relativo, csv de salida)  -- SOLO prensa institucional
+# Argumentos extra por scraper. El Senado ordena su listado por fecha, de modo
+# que 200 paginas (1.800 notas) cubren mas de un ano de novedades.
+ARGS_EXTRA = {
+    "senado": ["--max-pages", "200"],
+}
+
+# (nombre, script relativo, csv de salida)
 SCRAPERS = [
     ("interior",              "scrapers/scraper_interior.py",              "data/interior.csv"),
     ("minrel",                "scrapers/scraper_minrel.py",                "data/minrel.csv"),
@@ -42,6 +55,14 @@ SCRAPERS = [
     ("subtel",                "scrapers/scraper_subtel.py",                "data/subtel.csv"),
     ("dpp",                   "scrapers/scraper_dpp.py",                   "data/dpp.csv"),
     ("consejo_transparencia", "scrapers/scraper_consejo_transparencia.py", "data/consejo_transparencia.csv"),
+    ("seguridad",             "scrapers/scraper_seguridad.py",             "data/seguridad.csv"),
+    ("presidencia",           "scrapers/scraper_presidencia.py",           "data/presidencia.csv"),
+    ("sag",                   "scrapers/scraper_sag.py",                   "data/sag.csv"),
+    ("indap",                 "scrapers/scraper_indap.py",                 "data/indap.csv"),
+    ("sec",                   "scrapers/scraper_sec.py",                   "data/sec.csv"),
+    ("junaeb",                "scrapers/scraper_junaeb.py",                "data/junaeb.csv"),
+    ("senado",                "scrapers/scraper_senado.py",                "data/senado.csv"),
+    ("camara_diputados",      "scrapers/scraper_camara_diputados.py",      "data/camara_diputados.csv"),
 ]
 
 csv.field_size_limit(min(sys.maxsize, 2**31 - 1))
@@ -95,6 +116,13 @@ def correr_uno(nombre, script, csvrel, state, timeout):
     env["PYTHONIOENCODING"] = "utf-8"
     env["PYTHONUNBUFFERED"] = "1"
 
+    # Respaldo previo (si ya hay uno de hoy, se conserva el primero)
+    csv_path = ROOT / csvrel
+    respaldo = RESPALDO / csv_path.name
+    if csv_path.exists() and not respaldo.exists():
+        RESPALDO.mkdir(exist_ok=True)
+        shutil.copy2(csv_path, respaldo)
+
     t0 = time.monotonic()
     with open(log_path, "w", encoding="utf-8", errors="replace") as logf:
         logf.write(f"# === {nombre} :: {sys.executable} {script} ===\n")
@@ -102,7 +130,7 @@ def correr_uno(nombre, script, csvrel, state, timeout):
         logf.flush()
         try:
             r = subprocess.run(
-                [sys.executable, str(ROOT / script)],
+                [sys.executable, str(ROOT / script), *ARGS_EXTRA.get(nombre, [])],
                 cwd=str(ROOT),
                 stdout=logf,
                 stderr=subprocess.STDOUT,
@@ -115,6 +143,13 @@ def correr_uno(nombre, script, csvrel, state, timeout):
             rc = None
             estado = "timeout"
             logf.write(f"\n\n# !! TIMEOUT tras {timeout}s\n")
+
+    # Union con el respaldo por URL
+    if respaldo.exists():
+        try:
+            fusionar(csv_path.stem, RESPALDO)
+        except Exception as e:  # el CSV queda como lo dejo el scraper
+            print(f"  ! {nombre}: no se pudo unir con el respaldo ({e})", flush=True)
 
     dur = time.monotonic() - t0
     info["estado"] = estado

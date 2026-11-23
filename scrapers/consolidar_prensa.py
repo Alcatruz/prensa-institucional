@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Consolida los 11 CSV de PRENSA INSTITUCIONAL en un único CSV + XLSX.
+Consolida los CSV de PRENSA INSTITUCIONAL (lista FUENTES) en un único CSV + XLSX.
 
 Salida:
     data/prensa_institucional_consolidado.csv
@@ -30,6 +30,7 @@ COLUMNAS = ["fecha", "institucion", "titulo", "resumen", "url", "contenido"]
 FUENTES = [
     "interior", "minrel", "mop", "mma", "minagri", "mineduc",
     "midesof", "energia", "subtel", "dpp", "consejo_transparencia",
+    "seguridad", "presidencia", "sag", "indap", "sec", "junaeb",
 ]
 
 OUT_CSV = DATA / "prensa_institucional_consolidado.csv"

@@ -230,7 +230,7 @@ async def fetch_article_content(
         components = resource.get("components", [])
         texts = []
         for comp in components:
-            for key in ("body", "text", "field_body"):
+            for key in ("body", "text", "field_body", "description"):
                 val = comp.get(key)
                 if isinstance(val, dict):
                     html = val.get("processed") or val.get("value") or ""

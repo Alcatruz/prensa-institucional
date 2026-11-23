@@ -2,13 +2,23 @@
 Scraper para el Consejo para la Transparencia (CPLT)
 Fuente: https://www.consejotransparencia.cl/noticias/
 Extrae listado completo con paginación y el texto íntegro de cada noticia.
+
+Por defecto es incremental: si ya existe el CSV, omite las URLs conocidas y se
+detiene tras PAGINAS_SIN_NOVEDAD páginas seguidas del listado sin notas nuevas.
+El resultado se une con lo existente. Con --completo recorre todas las páginas.
+
+Uso:
+    python scrapers/scraper_consejo_transparencia.py
+    python scrapers/scraper_consejo_transparencia.py --completo
 """
 
+import argparse
 import asyncio
 import csv
 import json
 import logging
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -26,6 +36,10 @@ DELAY_ENTRE_PAGINAS = 2.0   # segundos entre páginas del listado
 DELAY_ENTRE_NOTICIAS = 1.5  # segundos entre noticias individuales
 MAX_REINTENTOS = 3
 TIMEOUT_MS = 30_000
+PAGINAS_SIN_NOVEDAD = 3     # modo incremental: corta tras N páginas sin notas nuevas
+COLUMNAS = ["fecha", "institucion", "titulo", "resumen", "url", "contenido"]
+
+csv.field_size_limit(min(sys.maxsize, 2**31 - 1))
 
 logging.basicConfig(
     level=logging.INFO,
@@ -54,10 +68,10 @@ def parsear_fecha(texto: str) -> str:
     """
     if not texto:
         return ""
-    # Primero intenta ISO
+    # Primero intenta ISO (descarta años imposibles: el sitio tiene erratas como 0201-07-17)
     m = re.search(r"(\d{4}-\d{2}-\d{2})", texto)
     if m:
-        return m.group(1)
+        return m.group(1) if m.group(1) >= "2008" else ""
     # Luego texto en español
     texto_l = texto.lower()
     m = re.search(r"(\d{1,2})\s+de\s+(\w+)\s+de\s+(\d{4})", texto_l)
@@ -96,7 +110,8 @@ async def extraer_contenido_noticia(page, url: str) -> dict:
             # El sitio tiene 2 h1: uno en el banner ("Noticias") y otro en el article
             # Usar "article .entry-title" para obtener el título real del artículo
             try:
-                titulo = await page.locator("article .entry-title, h1.entry-title").first.inner_text(timeout=5000)
+                loc = page.locator("article .entry-title, h1.entry-title")
+                titulo = await loc.first.inner_text(timeout=5000) if await loc.count() else ""
                 resultado["titulo"] = limpiar_texto(titulo)
             except Exception:
                 resultado["titulo"] = ""
@@ -111,6 +126,9 @@ async def extraer_contenido_noticia(page, url: str) -> dict:
                         data = json.loads(raw)
                         # Puede ser lista o dict
                         items = data if isinstance(data, list) else [data]
+                        # Yoast agrupa los nodos bajo "@graph"
+                        items = [n for it in items
+                                 for n in ((it.get("@graph") or [it]) if isinstance(it, dict) else [it])]
                         for item in items:
                             if isinstance(item, dict):
                                 dp = item.get("datePublished", "")
@@ -127,7 +145,8 @@ async def extraer_contenido_noticia(page, url: str) -> dict:
             # Fallback: meta tag
             if not fecha:
                 try:
-                    meta_date = await page.get_attribute('meta[property="article:published_time"]', "content")
+                    meta = page.locator('meta[property="article:published_time"]')
+                    meta_date = await meta.first.get_attribute("content", timeout=2000) if await meta.count() else ""
                     if meta_date:
                         fecha = parsear_fecha(meta_date)
                 except Exception:
@@ -136,8 +155,9 @@ async def extraer_contenido_noticia(page, url: str) -> dict:
             # Fallback: texto visible "Publicada el..."
             if not fecha:
                 try:
-                    texto_fecha = await page.locator("text=/Publicada el/").first.inner_text(timeout=3000)
-                    fecha = parsear_fecha(texto_fecha)
+                    loc = page.locator("text=/Publicada el/")
+                    if await loc.count():
+                        fecha = parsear_fecha(await loc.first.inner_text(timeout=3000))
                 except Exception:
                     pass
 
@@ -288,9 +308,21 @@ async def detectar_total_paginas(page) -> int:
 # Scraper principal
 # ---------------------------------------------------------------------------
 
-async def scrape():
+def leer_existentes(ruta: Path) -> list[list]:
+    """Filas ya guardadas, en el orden de COLUMNAS."""
+    if not ruta.exists():
+        return []
+    with open(ruta, encoding="utf-8", newline="") as f:
+        return [[(r.get(c) or "") for c in COLUMNAS] for r in csv.DictReader(f)]
+
+
+async def scrape(conocidas: set[str] | None = None, max_paginas: int | None = None):
+    """Recorre el listado. Si `conocidas` trae URLs, las omite y corta tras
+    PAGINAS_SIN_NOVEDAD páginas seguidas sin notas nuevas."""
     datos = []
-    urls_vistas = set()
+    urls_vistas = set(conocidas or ())
+    incremental = bool(conocidas)
+    sin_novedad = 0
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True)
@@ -312,8 +344,14 @@ async def scrape():
         log.info("Detectando total de páginas...")
         total_paginas = await detectar_total_paginas(page_lista)
         log.info("Total de páginas detectadas: %d", total_paginas)
+        if max_paginas:
+            total_paginas = min(total_paginas, max_paginas)
 
         for num_pagina in range(1, total_paginas + 1):
+            if incremental and sin_novedad >= PAGINAS_SIN_NOVEDAD:
+                log.info("Modo incremental: %d páginas seguidas sin notas nuevas, se detiene en la %d",
+                         sin_novedad, num_pagina - 1)
+                break
             if num_pagina == 1:
                 url_pagina = LISTADO_URL
             else:
@@ -329,6 +367,9 @@ async def scrape():
                 continue
 
             log.info("  -> %d artículos encontrados en página %d", len(articulos_pagina), num_pagina)
+
+            nuevas_pagina = [a for a in articulos_pagina if a["url"] not in urls_vistas]
+            sin_novedad = 0 if nuevas_pagina else sin_novedad + 1
 
             for art in articulos_pagina:
                 url = art["url"]
@@ -373,13 +414,20 @@ async def scrape():
 # Guardado CSV
 # ---------------------------------------------------------------------------
 
-def guardar_csv(datos: list, ruta: Path):
+def guardar_csv(datos: list, ruta: Path, previas: list | None = None):
+    """Escribe `datos` unido a `previas` (por URL; gana la versión nueva), por fecha desc."""
     ruta.parent.mkdir(parents=True, exist_ok=True)
+    por_url = {fila[4]: fila for fila in (previas or [])}
+    for fila in datos:
+        por_url[fila[4]] = fila
+    filas = sorted(por_url.values(),
+                   key=lambda r: r[0] if re.match(r"\d{4}-\d{2}-\d{2}$", r[0]) else "",
+                   reverse=True)
     with open(ruta, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f, quoting=csv.QUOTE_MINIMAL)
-        writer.writerow(["fecha", "institucion", "titulo", "resumen", "url", "contenido"])
-        writer.writerows(datos)
-    log.info("CSV guardado en: %s (%d filas)", ruta, len(datos))
+        writer.writerow(COLUMNAS)
+        writer.writerows(filas)
+    log.info("CSV guardado en: %s (%d filas, %d nuevas)", ruta, len(filas), len(datos))
 
 
 # ---------------------------------------------------------------------------
@@ -414,13 +462,24 @@ def validar_csv(ruta: Path):
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    ap = argparse.ArgumentParser(description="Scraper de noticias del CPLT")
+    ap.add_argument("--completo", action="store_true",
+                    help="recorre todas las páginas y reescribe el CSV desde cero")
+    ap.add_argument("--max-paginas", type=int, help="tope de páginas del listado (pruebas)")
+    ap.add_argument("--salida", type=Path, default=OUTPUT_PATH, help="ruta del CSV de salida")
+    args = ap.parse_args()
+
     log.info("Iniciando scraper del Consejo para la Transparencia")
-    log.info("Output: %s", OUTPUT_PATH)
+    log.info("Output: %s", args.salida)
 
-    datos = asyncio.run(scrape())
+    previas = [] if args.completo else leer_existentes(args.salida)
+    if previas:
+        log.info("Modo incremental: %d notas ya guardadas", len(previas))
 
-    if datos:
-        guardar_csv(datos, OUTPUT_PATH)
-        validar_csv(OUTPUT_PATH)
+    datos = asyncio.run(scrape({f[4] for f in previas}, args.max_paginas))
+
+    if datos or previas:
+        guardar_csv(datos, args.salida, previas)
+        validar_csv(args.salida)
     else:
         log.error("No se extrajeron datos. Revisa los logs.")
