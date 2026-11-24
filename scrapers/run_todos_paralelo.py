@@ -65,6 +65,49 @@ SCRAPERS = [
     ("camara_diputados",      "scrapers/scraper_camara_diputados.py",      "data/camara_diputados.csv"),
 ]
 
+# Scrapers con un script propio (data/<nombre>.csv)
+for _nombre in ["agencia_educacion", "hacienda", "contraloria", "corfo", "gendarmeria", "prochile",
+                "sii", "mindep", "pdi", "ine", "aduanas", "ips", "subdere", "siss", "scj", "subturismo"]:
+    SCRAPERS.append((_nombre, f"scrapers/scraper_{_nombre}.py", f"data/{_nombre}.csv"))
+
+# Scripts de familia: un mismo script sirve a varios sitios (argumento posicional)
+FAMILIAS = {
+    "scrapers/scraper_wp_api.py": [
+        "trabajo", "transportes", "minmujer", "indh", "servel", "tdlc", "tribunal_constitucional",
+        "fne", "chilecompra", "junji", "sernatur", "inia", "sma", "cchen", "fonasa", "sercotec", "cne",
+        "sernameg", "serviciocivil", "sernageomin", "superir", "previsionsocial",
+        "gore_tarapaca", "gore_atacama", "gore_rm", "gore_biobio", "gore_losrios", "gore_magallanes",
+        "gore_maule", "gore_nuble",
+        "emco", "efe", "casamoneda", "asmar", "enaer", "famae",
+        "utem", "umce", "upla", "uta", "uda", "ufro", "ulagos", "uaysen", "uoh", "ubiobio"],
+    "scrapers/scraper_sitemap.py": [
+        "culturas", "economia", "segegob", "minmineria", "minvu", "bienes_nacionales", "sernapesca",
+        "conaf", "cde", "cenabast", "supereduc", "isp", "senapred", "odepa", "senda", "migraciones",
+        "uantof", "umag"],
+    "scrapers/scraper_wp_html.py": ["minjusticia", "sml", "defensoria_ninez", "minsal", "minciencia"],
+    "scrapers/scraper_universidades.py": ["uchile", "usach", "uv", "unap", "userena", "utalca"],
+    "scrapers/scraper_defensa_empresas.py": [
+        "defensa", "armada", "directemar", "dgac", "codelco", "enap", "zofri", "enami", "metro"],
+    "scrapers/scraper_gores.py": [
+        "gore_arica", "gore_antofagasta", "gore_coquimbo", "gore_valparaiso", "gore_ohiggins",
+        "gore_araucania", "gore_aysen"],
+    "scrapers/scraper_listados_institucionales.py": [
+        "fiscalia", "sea", "patrimonio", "injuv", "sence", "fosis", "senama", "conadi", "senadis"],
+    "scrapers/scraper_listados_web.py": [
+        "dt", "sernac", "suseso", "spensiones", "subpesca", "servicio_proteccion", "dipres", "cmf",
+        "superdesalud"],
+}
+# delegaciones presidenciales: el script recibe la región y escribe data/dpr_<región>.csv
+for _region in ["aricayparinacota", "tarapaca", "antofagasta", "atacama", "coquimbo", "valparaiso",
+                "metropolitana", "ohiggins", "maule", "nuble", "biobio", "laaraucania", "losrios",
+                "loslagos", "aysen", "magallanes"]:
+    SCRAPERS.append((f"dpr_{_region}", "scrapers/scraper_dpr.py", f"data/dpr_{_region}.csv"))
+    ARGS_EXTRA[f"dpr_{_region}"] = [_region]
+for _script, _sitios in FAMILIAS.items():
+    for _sitio in _sitios:
+        SCRAPERS.append((_sitio, _script, f"data/{_sitio}.csv"))
+        ARGS_EXTRA[_sitio] = [_sitio] + ARGS_EXTRA.get(_sitio, [])
+
 csv.field_size_limit(min(sys.maxsize, 2**31 - 1))
 
 

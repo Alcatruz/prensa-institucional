@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Consolida los CSV de PRENSA INSTITUCIONAL (lista FUENTES) en un único CSV + XLSX.
+Consolida los CSV de prensa institucional (lista CONSOLIDADO de fuentes.py) en un único CSV + XLSX.
 
 Salida:
     data/prensa_institucional_consolidado.csv
@@ -11,6 +11,7 @@ Salida:
 - UTF-8, coma como separador, campos con comas/saltos entrecomillados.
 - Ordena por fecha descendente (timeline unificado).
 - Para el XLSX sanea caracteres ilegales y recorta celdas al límite de Excel (32.767).
+  Se escribe en modo streaming (write_only) porque el corpus supera las 300 mil filas.
 """
 import csv
 import re
@@ -18,20 +19,17 @@ import sys
 from pathlib import Path
 
 from openpyxl import Workbook
+from openpyxl.cell import WriteOnlyCell
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
-from openpyxl.styles import Font, Alignment
+from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
+
+from fuentes import CONSOLIDADO as FUENTES
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 
 COLUMNAS = ["fecha", "institucion", "titulo", "resumen", "url", "contenido"]
-
-FUENTES = [
-    "interior", "minrel", "mop", "mma", "minagri", "mineduc",
-    "midesof", "energia", "subtel", "dpp", "consejo_transparencia",
-    "seguridad", "presidencia", "sag", "indap", "sec", "junaeb",
-]
 
 OUT_CSV = DATA / "prensa_institucional_consolidado.csv"
 OUT_XLSX = DATA / "prensa_institucional_consolidado.xlsx"
@@ -87,37 +85,36 @@ def main():
         writer.writerows(todas)
     print(f"CSV  -> {OUT_CSV}")
 
-    # ---- XLSX ----
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "notas"
-
-    ws.append(COLUMNAS)
-    recortadas = 0
-    for r in todas:
-        fila = []
-        for c in COLUMNAS:
-            val = sanear_celda(r[c])
-            if c == "contenido" and r[c] and len(r[c]) > EXCEL_MAX:
-                recortadas += 1
-            fila.append(val)
-        ws.append(fila)
-
-    # Estilo cabecera + freeze + anchos
+    # ---- XLSX (streaming: anchos, panel fijo y filtro se definen antes de escribir filas) ----
+    wb = Workbook(write_only=True)
+    ws = wb.create_sheet("notas")
     bold = Font(bold=True)
-    for col_idx, _ in enumerate(COLUMNAS, 1):
-        ws.cell(row=1, column=col_idx).font = bold
-    ws.freeze_panes = "A2"
-    ws.auto_filter.ref = f"A1:{get_column_letter(len(COLUMNAS))}1"
     anchos = {"fecha": 12, "institucion": 34, "titulo": 55, "resumen": 55, "url": 45, "contenido": 70}
     for col_idx, c in enumerate(COLUMNAS, 1):
         ws.column_dimensions[get_column_letter(col_idx)].width = anchos.get(c, 20)
+    ws.freeze_panes = "A2"
+    ws.auto_filter.ref = f"A1:{get_column_letter(len(COLUMNAS))}{len(todas) + 1}"
+
+    def cabecera(hoja, nombres):
+        celdas = []
+        for n in nombres:
+            cel = WriteOnlyCell(hoja, value=n)
+            cel.font = bold
+            celdas.append(cel)
+        return celdas
+
+    ws.append(cabecera(ws, COLUMNAS))
+    recortadas = 0
+    for r in todas:
+        if r["contenido"] and len(r["contenido"]) > EXCEL_MAX:
+            recortadas += 1
+        ws.append([sanear_celda(r[c]) for c in COLUMNAS])
 
     # ---- Hoja resumen ----
     ws2 = wb.create_sheet("resumen")
-    ws2.append(["institucion", "n_notas", "fecha_min", "fecha_max"])
-    for c in ws2[1]:
-        c.font = bold
+    for col_idx, w in enumerate([34, 10, 12, 12], 1):
+        ws2.column_dimensions[get_column_letter(col_idx)].width = w
+    ws2.append(cabecera(ws2, ["institucion", "n_notas", "fecha_min", "fecha_max"]))
     # Agrupar por institucion
     resumen = {}
     for r in todas:
@@ -134,11 +131,7 @@ def main():
                     d["fmin"] if d["fmin"] != "9999" else "",
                     d["fmax"] if d["fmax"] != "0000" else ""])
     ws2.append([])
-    ws2.append(["TOTAL", len(todas), "", ""])
-    ws2[ws2.max_row][0].font = bold
-    ws2[ws2.max_row][1].font = bold
-    for col_idx, w in enumerate([34, 10, 12, 12], 1):
-        ws2.column_dimensions[get_column_letter(col_idx)].width = w
+    ws2.append(cabecera(ws2, ["TOTAL", len(todas)]) + ["", ""])
 
     wb.save(OUT_XLSX)
     print(f"XLSX -> {OUT_XLSX}  ({recortadas} contenidos recortados al límite de Excel)")

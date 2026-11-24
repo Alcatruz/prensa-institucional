@@ -22,36 +22,13 @@ from pathlib import Path
 
 import pandas as pd
 
+from fuentes import FUENTES
+
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 SALIDA = DATA / "cobertura_por_gobierno.csv"
 
 csv.field_size_limit(min(sys.maxsize, 2**31 - 1))
-
-# (archivo, etiqueta, grupo)
-FUENTES = [
-    ("presidencia", "Presidencia (comunicados)", "Ejecutivo"),
-    ("presidencia_discursos", "Presidencia (discursos)", "Ejecutivo"),
-    ("presidencia_gobcl", "Presidencia (gob.cl, por título)", "Ejecutivo"),
-    ("interior", "Interior", "Ejecutivo"),
-    ("seguridad", "Seguridad Pública", "Ejecutivo"),
-    ("minrel", "Relaciones Exteriores", "Ejecutivo"),
-    ("mop", "Obras Públicas", "Ejecutivo"),
-    ("mma", "Medio Ambiente", "Ejecutivo"),
-    ("minagri", "Agricultura", "Ejecutivo"),
-    ("sag", "Servicio Agrícola y Ganadero (SAG)", "Ejecutivo"),
-    ("indap", "Instituto de Desarrollo Agropecuario (INDAP)", "Ejecutivo"),
-    ("mineduc", "Educación", "Ejecutivo"),
-    ("junaeb", "Junaeb", "Ejecutivo"),
-    ("midesof", "Desarrollo Social y Familia", "Ejecutivo"),
-    ("energia", "Energía", "Ejecutivo"),
-    ("sec", "Superintendencia de Electricidad y Combustibles (SEC)", "Ejecutivo"),
-    ("subtel", "Subsecretaría de Telecomunicaciones (SUBTEL)", "Ejecutivo"),
-    ("dpp", "Defensoría Penal Pública", "Otros organismos"),
-    ("consejo_transparencia", "Consejo para la Transparencia", "Otros organismos"),
-    ("senado", "Senado", "Congreso"),
-    ("camara_diputados", "Cámara de Diputadas y Diputados", "Congreso"),
-]
 
 CAMBIOS_DE_MANDO = [
     ("2006-03-11", "Bachelet I"), ("2010-03-11", "Piñera I"), ("2014-03-11", "Bachelet II"),
@@ -78,7 +55,13 @@ def cobertura() -> pd.DataFrame:
         if not ruta.exists():
             print(f"  ! falta {ruta.name}, se omite")
             continue
-        d = pd.read_csv(ruta, dtype=str, keep_default_na=False, usecols=["fecha", "contenido"])
+        try:
+            d = pd.read_csv(ruta, dtype=str, keep_default_na=False, usecols=["fecha", "contenido"])
+        except (pd.errors.EmptyDataError, ValueError):
+            print(f"  ! {ruta.name} vacío o en escritura, se omite")
+            continue
+        if d.empty:
+            continue
         validas = d.fecha[d.fecha.str.match(r"^20\d{2}-\d{2}-\d{2}$")]
         por_gob = d.fecha.map(gobierno).value_counts()
         filas.append({

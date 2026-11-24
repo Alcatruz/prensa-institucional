@@ -7,8 +7,7 @@
 
 !/figuras/
 /figuras/*
-!/figuras/animacion_cobertura.py
-!/figuras/cobertura.gif
+!/figuras/cobertura.py
 !/figuras/cobertura.png
 
 !/scrapers/
@@ -35,6 +34,34 @@
 !/scrapers/ministros_gabinete.py
 !/scrapers/fusionar_respaldo.py
 !/scrapers/cobertura_por_gobierno.py
+!/scrapers/comun.py
+!/scrapers/fuentes.py
+!/scrapers/listados.py
+!/scrapers/scraper_wp_api.py
+!/scrapers/scraper_sitemap.py
+!/scrapers/scraper_wp_html.py
+!/scrapers/scraper_listados_institucionales.py
+!/scrapers/scraper_listados_web.py
+!/scrapers/scraper_agencia_educacion.py
+!/scrapers/scraper_hacienda.py
+!/scrapers/scraper_contraloria.py
+!/scrapers/scraper_corfo.py
+!/scrapers/scraper_gendarmeria.py
+!/scrapers/scraper_prochile.py
+!/scrapers/scraper_sii.py
+!/scrapers/scraper_mindep.py
+!/scrapers/scraper_pdi.py
+!/scrapers/scraper_ine.py
+!/scrapers/scraper_aduanas.py
+!/scrapers/scraper_ips.py
+!/scrapers/scraper_subdere.py
+!/scrapers/scraper_siss.py
+!/scrapers/scraper_scj.py
+!/scrapers/scraper_subturismo.py
+!/scrapers/scraper_gores.py
+!/scrapers/scraper_dpr.py
+!/scrapers/scraper_universidades.py
+!/scrapers/scraper_defensa_empresas.py
 !/scrapers/run_todos_paralelo.py
 !/scrapers/consolidar_prensa.py
 
