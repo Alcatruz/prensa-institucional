@@ -35,12 +35,14 @@ import gzip
 import html
 import re
 import sys
-from urllib.parse import urljoin
+import unicodedata
+from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup
 
-from comun import (DATA, SalidaCSV, argumentos, configurar_log, en_paralelo, fecha_de_url,
-                   fecha_iso, fecha_meta, limpiar, obtener, sesion, texto_de)
+from comun import (DATA, SalidaCSV, argumentos, configurar_log, cuerpo_por_densidad, en_paralelo,
+                   fecha_de_url, fecha_iso, fecha_meta, limpiar, obtener, sesion, texto_de)
+from fuentes import SUJETOS
 
 log = configurar_log("sitemap")
 
@@ -147,6 +149,24 @@ SITIOS = {
         sitemaps=["https://serviciomigraciones.cl/post-sitemap.xml"], cuerpo=ELEMENTOR),
 }
 
+# Sujetos obligados del catálogo (auditoria_salas_prensa.py --catalogo) que son WordPress
+# sin API abierta: se toman las entradas del sitemap y el cuerpo con selectores comunes
+# de los temas de WordPress. Las notas quedan en data/sujetos/<clave>.csv.
+# Si ningún selector calza, el cuerpo es el bloque con más texto en párrafos, y la
+# fecha sale del feed RSS del sitio (WordPress lo publica en /feed/).
+WORDPRESS = [".entry-content", ".elementor-widget-theme-post-content", ".post-content",
+             ".et_pb_post_content", ".single-content", ".td-post-content"]
+for _s in SUJETOS:
+    if _s["metodo"] == "wp_sitemap" and _s["clave"] not in SITIOS:
+        SITIOS[_s["clave"]] = dict(institucion=_s["institucion"], indice=_s["sitemap"],
+                                   patron=r"(posts-post-\d+|post-sitemap\d*)\.xml", cuerpo=WORDPRESS,
+                                   densidad=True, rss=_s["base"].rstrip("/") + "/feed/",
+                                   archivo=f"sujetos/{_s['clave']}")
+    elif _s["metodo"] == "wp_rss" and _s["clave"] not in SITIOS:  # sin API ni sitemap: las notas del feed
+        SITIOS[_s["clave"]] = dict(institucion=_s["institucion"], rss=_s["base"].rstrip("/") + "/feed/",
+                                   rss_urls=True, cuerpo=WORDPRESS, densidad=True,
+                                   archivo=f"sujetos/{_s['clave']}")
+
 SELECTORES_TITULO = ["h1.entry-title", ".entry-title", "article h1", "main h1", "h1"]
 
 
@@ -191,16 +211,35 @@ def fechas_rss(s, feed: str, pausa: float, textos: dict | None = None) -> dict[s
         items = [it for it in items if "<link>" in it and "<pubDate>" in it]
         if not items:
             break
+        antes = len(fechas)
         for it in items:
-            link = _cdata(it, "link").strip().rstrip("/")
+            link = re.sub(r"[?&]utm_[^#]*", "", html.unescape(_cdata(it, "link")).strip()).rstrip("/")
             fechas[link] = fecha_iso(_cdata(it, "pubDate"))
             if textos is not None:
                 textos[link] = {
                     "titulo": limpiar(html.unescape(_cdata(it, "title"))),
                     "contenido": texto_de(BeautifulSoup(_cdata(it, "content:encoded"), "html.parser"))}
+        if len(fechas) == antes:  # el sitio ignora ?paged= y repite la misma página
+            break
         pagina += 1
     log.info("RSS: %d fechas en %d páginas", len(fechas), pagina - 1)
     return fechas
+
+
+def _plano(t: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", unicodedata.normalize("NFKD", t).encode("ascii", "ignore").decode().lower())
+
+
+def quitar_sitio(titulo: str, url: str, institucion: str) -> str:
+    """Quita del final del título el nombre del sitio ("Nota | InvestChile"), solo si
+    coincide con el dominio, la sigla o el nombre de la institución."""
+    m = re.search(r"\s+[-–|]\s+([^-–|]+)$", titulo)
+    if not m:
+        return titulo
+    final = _plano(m.group(1))
+    propios = {_plano(urlparse(url).netloc.removeprefix("www.").split(".")[0]), _plano(institucion)}
+    propios |= {_plano(x) for x in re.findall(r"\(([^)]+)\)", institucion)}
+    return titulo[:m.start()].strip() if final and final in propios else titulo
 
 
 def urls_de_notas(s, cfg: dict, pausa: float) -> list[tuple[str, str]]:
@@ -231,6 +270,10 @@ def extraer(soup, cfg: dict) -> dict:
                 candidatos.append(t)
         if candidatos and not cfg.get("mayor"):
             break
+    if not candidatos and cfg.get("densidad"):
+        t = cuerpo_por_densidad(soup)
+        if len(t.split()) >= 40:
+            candidatos.append(t)
     cuerpo = max(candidatos, key=lambda t: len(t.split())) if candidatos else ""
     if cfg.get("ruido") and cuerpo:
         cuerpo = "\n".join(l for l in cuerpo.split("\n") if l.strip() not in cfg["ruido"])
@@ -258,6 +301,10 @@ def extraer(soup, cfg: dict) -> dict:
         if len(partes) > 1 and partes[-1].lower() == nombre:
             partes = partes[:-1]
         titulo = " - ".join(partes)
+    sitio = soup.select_one('meta[property="og:site_name"]')
+    if sitio and sitio.get("content"):  # "Título - Nombre del sitio" -> "Título"
+        sufijo = re.escape(limpiar(sitio["content"]))
+        titulo = re.sub(rf"\s+[-–|]\s+{sufijo}$", "", titulo, flags=re.I).strip() or titulo
     if cfg.get("sufijo_titulo"):
         titulo = re.sub(cfg["sufijo_titulo"], "", titulo, flags=re.I).strip()
     # fecha
@@ -294,7 +341,7 @@ def main():
     if args.sitio not in SITIOS:
         sys.exit(f"Sitio desconocido: {args.sitio}. Usa --lista.")
     cfg = SITIOS[args.sitio]
-    salida = SalidaCSV(args.salida or DATA / f"{args.sitio}.csv")
+    salida = SalidaCSV(args.salida or DATA / f"{cfg.get('archivo', args.sitio)}.csv")
     s = sesion()
     log.info("%s: %s (%d notas ya guardadas)", args.sitio, cfg["institucion"], salida.previas)
 
@@ -326,6 +373,7 @@ def main():
             return
         soup = BeautifulSoup(r.text, "html.parser")
         d = extraer(soup, cfg)
+        d["titulo"] = quitar_sitio(d["titulo"], url, cfg["institucion"])
         # página rota o vacía: título y cuerpo desde el feed, si los trae
         del_feed = textos_rss.get(url.rstrip("/"), {})
         if len(d["contenido"].split()) < 40 and len(del_feed.get("contenido", "").split()) > len(d["contenido"].split()):

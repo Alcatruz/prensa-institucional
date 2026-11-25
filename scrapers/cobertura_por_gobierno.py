@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from fuentes import FUENTES
+from fuentes import FILA_AGREGADA, FUENTES, GRUPOS
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
@@ -53,7 +53,8 @@ def cobertura() -> pd.DataFrame:
     for archivo, etiqueta, grupo in FUENTES:
         ruta = DATA / f"{archivo}.csv"
         if not ruta.exists():
-            print(f"  ! falta {ruta.name}, se omite")
+            if not archivo.startswith("sujetos/"):  # los sitios del catálogo sin notas se omiten callados
+                print(f"  ! falta {ruta.name}, se omite")
             continue
         try:
             d = pd.read_csv(ruta, dtype=str, keep_default_na=False, usecols=["fecha", "contenido"])
@@ -70,8 +71,30 @@ def cobertura() -> pd.DataFrame:
             "sin_fecha": int(len(d) - por_gob.sum()),
             "total": len(d), "desde": validas.min(), "hasta": validas.max(),
             "pct_cuerpo_40": round(100 * (d.contenido.str.split().str.len() >= 40).mean(), 1),
+            "fila": FILA_AGREGADA.get(archivo, ""),
         })
-    return pd.DataFrame(filas)
+    return agregar(pd.DataFrame(filas))
+
+
+def agregar(t: pd.DataFrame) -> pd.DataFrame:
+    """Suma en una fila los sitios del mismo tipo (municipios de una región, hospitales...)."""
+    if t.empty:
+        return t
+    t = t.copy()
+    t["orden"] = range(len(t))
+    sueltas = t[t.fila == ""]
+    juntas = []
+    for (grupo, fila), g in t[t.fila != ""].groupby(["grupo", "fila"], sort=False):
+        juntas.append({
+            "organismo": f"{fila} ({len(g)} {'sitio' if len(g) == 1 else 'sitios'})", "grupo": grupo, "archivo": f"sujetos/ ({len(g)})",
+            **{c: int(g[c].sum()) for c in GOBIERNOS + ["sin_fecha", "total"]},
+            "desde": g.desde.dropna().min(), "hasta": g.hasta.dropna().max(),
+            "pct_cuerpo_40": round((g.pct_cuerpo_40 * g.total).sum() / max(g.total.sum(), 1), 1),
+            "fila": fila, "orden": g.orden.min(),
+        })
+    t = pd.concat([sueltas, pd.DataFrame(juntas)], ignore_index=True)
+    t["g"] = t.grupo.map({g: i for i, g in enumerate(GRUPOS)})
+    return t.sort_values(["g", "orden"]).drop(columns=["g", "orden", "fila"]).reset_index(drop=True)
 
 
 def mes_anio(fecha: str) -> str:

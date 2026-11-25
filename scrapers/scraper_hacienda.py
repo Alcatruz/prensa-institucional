@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Scraper del Ministerio de Hacienda (hacienda.cl): noticias y comunicados.
+Scraper del Ministerio de Hacienda (hacienda.cl): noticias y comunicados del
+ministerio, y noticias de la Subsecretaría de Hacienda, que tiene su propia
+sección (/subsecretaria/noticias) con notas que no aparecen en la del ministerio.
 
 La paginación usa ?foco=<primera nota de la página> y sus enlaces salen del menú
 `section.paginas .dropdown-menu` de la primera página de cada sección. El orden
@@ -24,8 +26,9 @@ from comun import fecha_iso, log
 
 INSTITUCION = "Ministerio de Hacienda"
 BASE = "https://www.hacienda.cl"
-SECCIONES = [("noticias", BASE + "/noticias-y-eventos/noticias"),
-             ("comunicados", BASE + "/noticias-y-eventos/comunicados")]
+SECCIONES = [("noticias", BASE + "/noticias-y-eventos/noticias", INSTITUCION),
+             ("comunicados", BASE + "/noticias-y-eventos/comunicados", INSTITUCION),
+             ("subsecretaria", BASE + "/subsecretaria/noticias", "Subsecretaría de Hacienda")]
 
 
 def paginas_de(soup, inicial: str) -> list[str]:
@@ -38,27 +41,28 @@ def paginas_de(soup, inicial: str) -> list[str]:
     return out
 
 
-def parsear(soup) -> list[dict]:
+def parsear(soup, institucion: str = INSTITUCION) -> list[dict]:
     out = []
     # En comunicados, los ítems li.clase-documento enlazan a un PDF (no a una página
     # con cuerpo en HTML): se omiten; solo se toman los li.clase-articulo.
     for c in soup.select("div.card, li.clase-articulo"):
         a = c.select_one("a.stretched-link[href]") or c.select_one("h3 a[href]") or c.select_one("a[href]")
-        if not a or "/noticias-y-eventos/" not in a["href"]:
+        if not a or not any(p in a["href"] for p in ("/noticias-y-eventos/", "/subsecretaria/noticias/")):
             continue
         t = c.select_one("time")
         r = c.select_one(".resumen")
         out.append({"url": L.url_limpia(BASE, a["href"]),
                     "titulo": a.get_text(" ", strip=True),
                     "fecha": fecha_iso(t.get_text(" "), orden="dmy") if t else "",
-                    "resumen": r.get_text(" ", strip=True) if r else ""})
+                    "resumen": r.get_text(" ", strip=True) if r else "",
+                    "institucion": institucion})
     return out
 
 
 def listar(s, pausa: float, limite: int = 0) -> list[dict]:
     """Recorre todas las páginas de ambas secciones. `limite` corta al juntar N notas."""
     vistas: dict[str, dict] = {}
-    for nombre, inicial in SECCIONES:
+    for nombre, inicial, institucion in SECCIONES:
         soup = L.bajar_soup(s, inicial, pausa)
         if soup is None:
             log.warning("hacienda/%s: no se pudo bajar el listado", nombre)
@@ -71,7 +75,7 @@ def listar(s, pausa: float, limite: int = 0) -> list[dict]:
                 if soup is None:
                     log.warning("hacienda/%s: falló la página %d", nombre, i)
                     continue
-            for it in parsear(soup):
+            for it in parsear(soup, institucion):
                 vistas.setdefault(it["url"], it)
             if limite and len(vistas) >= limite:
                 return list(vistas.values())[:limite]
@@ -98,7 +102,7 @@ def main():
             log.warning("Sin cuerpo utilizable: %s", it["url"])
             return
         resumen = it["resumen"] or L.resumen_de(texto)
-        salida.agregar(L.fila(fecha, INSTITUCION, it["titulo"], resumen, it["url"], texto))
+        salida.agregar(L.fila(fecha, it["institucion"], it["titulo"], resumen, it["url"], texto))
 
     try:
         items = [it for it in listar(s, args.pausa, args.muestra) if not salida.ya_esta(it["url"])]

@@ -25,7 +25,7 @@ from matplotlib.patches import Rectangle
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scrapers"))
-from fuentes import FUENTES, GRUPOS  # noqa: E402
+from fuentes import FILA_AGREGADA, FUENTES, GRUPOS  # noqa: E402
 
 DATA = ROOT / "data"
 SALIDA = Path(__file__).resolve().parent / "cobertura.png"
@@ -68,9 +68,31 @@ def conteos() -> list[dict]:
             continue
         anios = pd.to_numeric(f.str[:4], errors="coerce").dropna().astype(int)
         c = anios[anios.isin(ANIOS)].value_counts()
-        filas.append({"etiqueta": etiqueta, "grupo": grupo, "total": len(f),
-                      "anual": {a: int(c.get(a, 0)) for a in ANIOS}})
-    return filas
+        filas.append({"etiqueta": etiqueta, "grupo": grupo, "total": len(f), "sitios": 1,
+                      "anual": {a: int(c.get(a, 0)) for a in ANIOS}, "fila": FILA_AGREGADA.get(archivo, "")})
+    return agregar(filas)
+
+
+def agregar(filas: list[dict]) -> list[dict]:
+    """Suma en una fila los sitios del mismo tipo (municipios de una región, hospitales...)."""
+    salida, juntas = [], {}
+    for f in filas:
+        if not f["fila"]:
+            salida.append(f)
+            continue
+        k = (f["grupo"], f["fila"])
+        if k not in juntas:
+            juntas[k] = {"etiqueta": f["fila"], "grupo": f["grupo"], "total": 0, "sitios": 0,
+                         "anual": {a: 0 for a in ANIOS}, "fila": f["fila"]}
+            salida.append(juntas[k])
+        j = juntas[k]
+        j["total"] += f["total"]
+        j["sitios"] += 1
+        for a in ANIOS:
+            j["anual"][a] += f["anual"][a]
+    for j in juntas.values():
+        j["etiqueta"] = f"{j['etiqueta']} ({j['sitios']} {'sitio' if j['sitios'] == 1 else 'sitios'})"
+    return salida
 
 
 def main():
@@ -137,7 +159,7 @@ def main():
     fig.text(0.02, 1 - 0.38 / alto, "Prensa institucional del Estado de Chile", fontsize=16,
              fontweight="semibold", color=TINTA, ha="left", va="baseline")
     fig.text(0.02, 1 - 0.66 / alto, f"Notas publicadas por año y organismo · {miles(total_notas)} notas "
-             f"de {len(filas)} fuentes", fontsize=10, color=TINTA_2, ha="left", va="baseline")
+             f"de {sum(f['sitios'] for f in filas)} fuentes", fontsize=10, color=TINTA_2, ha="left", va="baseline")
     lx = 0.02
     fig.text(lx, 1 - 0.95 / alto, "Notas por año:", fontsize=8.2, color=TINTA_2, ha="left", va="center")
     lx += 0.085
@@ -154,7 +176,7 @@ def main():
              fontsize=7.6, color=TINTA_MUTED, ha="right", va="baseline")
 
     fig.savefig(SALIDA, facecolor=SUPERFICIE, dpi=110)
-    print(f"{len(filas)} fuentes, {miles(total_notas)} notas -> {SALIDA}")
+    print(f"{sum(f['sitios'] for f in filas)} fuentes, {miles(total_notas)} notas -> {SALIDA}")
 
 
 if __name__ == "__main__":

@@ -17,7 +17,8 @@ Sitios y fuentes:
     fosis      Fondo de Solidaridad e Inversión   fosis.gob.cl/es/noticias/lista_noticias/?page=N (desde 1)
     senama     Servicio Nacional del Adulto Mayor senama.gob.cl/noticias?page=N (desde 1)
     conadi     Corp. Nac. de Desarrollo Indígena  conadi.gob.cl/noticias?page=N (desde 1)
-    senadis    Servicio Nacional de la Discapac.  senadis.gob.cl/sala_prensa/noticias/page/N (desde 1)
+    senadis    Servicio Nacional de la Discapac.  senadis.gob.cl/{sala_prensa,participacion,endisc}/noticias/page/N (desde 1;
+                                                  el mismo ID de nota puede repetirse entre secciones y se guarda una vez)
 
 Estrategia: se recorre el listado página a página (la más reciente primero); de cada página
 se bajan en paralelo las notas que aún no están en el CSV, entrando al enlace de cada una para
@@ -224,7 +225,10 @@ SITIOS = {
         migracion=("2017-10-01", "2017-10-31")),
     "senadis": dict(
         institucion="Servicio Nacional de la Discapacidad",
-        secciones=[("https://www.senadis.gob.cl/sala_prensa/noticias/page/{n}", 1)],
+        secciones=[("https://www.senadis.gob.cl/sala_prensa/noticias/page/{n}", 1),
+                   ("https://www.senadis.gob.cl/participacion/noticias/page/{n}", 1),
+                   ("https://www.senadis.gob.cl/endisc/noticias/page/{n}", 1)],
+        id_nota=r"/noticias/(\d+)/",
         listado=listado_senadis,
         cuerpo=["div.cont_contenidos #contenido"],
         resumen="#contenido > ul",
@@ -282,6 +286,11 @@ def recorrer_seccion(plantilla, primera, cfg, salida, s, a, incremental, tope):
     sin_nuevas = 0
     fallos = 0
     vistas_ant: set[str] = set()
+    # sitios cuyas secciones comparten numeración: una nota ya guardada bajo otra sección no se repite
+    re_id = re.compile(cfg["id_nota"]) if cfg.get("id_nota") else None
+    ids_vistos: set[str] = set()
+    if re_id:
+        ids_vistos = {m.group(1) for u in salida.urls if (m := re_id.search(u))}
     while True:
         url_lista = plantilla.format(n=n)
         r = obtener(s, url_lista, a.pausa)
@@ -300,6 +309,16 @@ def recorrer_seccion(plantilla, primera, cfg, salida, s, a, incremental, tope):
             return procesadas, True
         vistas_ant = urls
         nuevos = [i for i in items if not salida.ya_esta(i["url"])]
+        if re_id:
+            filtrados = []
+            for i in nuevos:
+                m = re_id.search(i["url"])
+                if m and m.group(1) in ids_vistos:
+                    continue
+                if m:
+                    ids_vistos.add(m.group(1))
+                filtrados.append(i)
+            nuevos = filtrados
         if tope:
             nuevos = nuevos[:max(0, tope - procesadas)]
         if nuevos:

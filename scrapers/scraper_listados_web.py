@@ -15,7 +15,7 @@ Sitios (cada uno escribe data/<sitio>.csv por defecto):
                          la nota no trae fecha: se toma del listado)
     subpesca             Subsecretaría de Pesca y Acuicultura (dos páginas: vigentes e históricas)
     servicio_proteccion  Servicio Nacional de Protección Especializada a la Niñez y Adolescencia
-                         (Archivo;Periodo/AAAA, 2021 en adelante; se excluye /Noticias/Prensa/)
+                         (Archivo;Periodo/AAAA, 2021 en adelante, más la sección Prensa)
     dipres               Dirección de Presupuestos (noticias + comunicados que traen texto HTML)
     cmf                  Comisión para el Mercado Financiero (una sola página con todos los comunicados)
     superdesalud         Superintendencia de Salud (WordPress; una página por año, 2005 en adelante)
@@ -206,12 +206,16 @@ def desc_subpesca(s, pausa):
 
 
 def desc_servicio_proteccion(s, pausa):
+    # Archivo por año (Noticias del Servicio y Prensa) y la sección Prensa, que lista aparte las
+    # notas de medios. Desde 2026 las notas nuevas usan la URL corta /portal/<id>: (sin sección).
     urls = [f"https://www.servicioproteccion.gob.cl/portal/Noticias/Archivo;Periodo/{a}/"
             for a in range(2021, date.today().year + 1)]
+    urls += ["https://www.servicioproteccion.gob.cl/portal/Noticias/Noticias-del-Servicio/",
+             "https://www.servicioproteccion.gob.cl/portal/Noticias/Prensa/"]
     cuerpo = "div.ar-noticia-cuerpo div.cuerpo"
     return _paginas(s, pausa, urls, lambda sp, u: items_newtenberg(
         sp, u, ".titulo a", cuerpo=cuerpo,
-        filtro_href=lambda h: "/Noticias/Prensa/" not in h and re.search(r"/Noticias/[^/]+/\d+:", h)))
+        filtro_href=lambda h: re.search(r"/portal/(?:Noticias/[^/]+/)?\d+:", h)))
 
 
 def desc_dipres(s, pausa):

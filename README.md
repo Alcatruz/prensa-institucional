@@ -1,12 +1,14 @@
 # Prensa institucional
 
-Extracción de las notas de prensa que publican en sus sitios web los organismos del Estado de Chile: Presidencia, ministerios y subsecretarías, servicios públicos, gobiernos regionales y delegaciones presidenciales, Fuerzas Armadas, empresas públicas, universidades estatales, organismos autónomos y el Congreso Nacional. Cada scraper recorre la sala de prensa del organismo y obtiene el texto completo de cada nota.
+Extracción de las notas de prensa que publican en sus sitios web los organismos del Estado de Chile: Presidencia, ministerios y subsecretarías, servicios públicos, servicios de salud y hospitales, servicios locales de educación pública, gobiernos regionales y delegaciones presidenciales, municipios y corporaciones municipales, Fuerzas Armadas, empresas públicas, universidades y CFT estatales, organismos autónomos y el Congreso Nacional. Cada scraper recorre la sala de prensa del organismo y obtiene el texto completo de cada nota.
+
+El universo de referencia son los sujetos obligados por la Ley de Transparencia, según el listado de organismos que publica el Consejo para la Transparencia en sus datos abiertos.
 
 ![Notas por año y organismo](figuras/cobertura.png)
 
 ## Cobertura
 
-Estado a la última extracción (24 de noviembre de 2026): 473.079 notas de 154 fuentes, el 97 % con al menos 40 palabras de texto. El consolidado reúne 440.855 notas de 150 organismos; el Congreso (27.687 notas, la Cámara hasta abril de 2026), los discursos presidenciales y la selección de gob.cl quedan aparte. Ocho delegaciones presidenciales están pendientes (ver limitaciones).
+Estado a la última extracción (24 de noviembre de 2026): 749.626 notas de 608 fuentes, el 96 % con al menos 40 palabras de texto. Son 154 salas de prensa con scraper propio y 454 sitios del catálogo de sujetos obligados. El consolidado reúne 717.402 notas de 604 fuentes; el Congreso (27.687 notas, la Cámara hasta abril de 2026), los discursos presidenciales y la selección de gob.cl quedan aparte. Ocho delegaciones presidenciales están pendientes y la recuperación del archivo completo de la Universidad de Chile sigue en curso (ver limitaciones).
 
 <details>
 <summary>Notas por organismo y gobierno (cambio de mando el 11 de marzo)</summary>
@@ -22,7 +24,7 @@ Estado a la última extracción (24 de noviembre de 2026): 473.079 notas de 154 
 | Interior | – | – | – | – | 153 | 590 | 222 | 965 | mar 2018 | nov 2026 |
 | Seguridad Pública | – | – | – | – | – | 122 | 55 | 177 | mar 2025 | nov 2026 |
 | Relaciones Exteriores | – | – | – | 73 | 1.710 | 2.468 | 601 | 4.852 | ene 2017 | nov 2026 |
-| Hacienda | – | – | – | – | 862 | 1.434 | 58 | 2.367 | mar 2018 | nov 2026 |
+| Hacienda | – | – | – | 2 | 1.108 | 1.647 | 112 | 2.888 | ene 2018 | nov 2026 |
 | Economía, Fomento y Turismo | – | – | – | 1.171 | 530 | 725 | 351 | 2.777 | mar 2014 | nov 2026 |
 | Secretaría General de Gobierno | – | – | – | 829 | 1.546 | 806 | 168 | 3.349 | mar 2015 | nov 2026 |
 | Justicia y Derechos Humanos | – | – | – | – | 594 | 588 | 133 | 1.315 | mar 2018 | nov 2026 |
@@ -48,6 +50,10 @@ Estado a la última extracción (24 de noviembre de 2026): 473.079 notas de 154 
 | Subsecretaría de Desarrollo Regional | – | – | – | 1.604 | 1.790 | 1.302 | 281 | 4.977 | mar 2014 | nov 2026 |
 | Subsecretaría de Turismo | – | – | – | 178 | 497 | 259 | 56 | 990 | mar 2014 | nov 2026 |
 | Defensa Nacional | – | – | – | – | – | – | 181 | 181 | mar 2026 | nov 2026 |
+| Subsecretaría de Derechos Humanos | – | – | – | – | – | 138 | 40 | 178 | jun 2023 | nov 2026 |
+| Subsecretaría de Educación Parvularia | – | – | – | 127 | 304 | 346 | 44 | 821 | nov 2014 | nov 2026 |
+| Subsecretaría de Educación Superior | – | – | – | 53 | 427 | 425 | 75 | 980 | sep 2015 | nov 2026 |
+| Subsecretaría de Transportes (MTT) | – | – | – | 345 | 1.545 | 704 | 75 | 2.669 | jul 2014 | nov 2026 |
 | **Servicios públicos** | | | | | | | | | | |
 | Servicio Agrícola y Ganadero | – | 214 | 733 | 1.022 | 696 | 886 | 137 | 3.688 | ene 2009 | nov 2026 |
 | INDAP | – | – | 1.626 | 4.344 | 3.534 | 2.846 | 468 | 12.818 | ago 2012 | nov 2026 |
@@ -64,16 +70,16 @@ Estado a la última extracción (24 de noviembre de 2026): 473.079 notas de 154 
 | Comisión Chilena de Energía Nuclear | – | – | – | 8 | 244 | 231 | 51 | 534 | ene 2018 | nov 2026 |
 | Servicio de Evaluación Ambiental | – | – | – | 292 | 342 | 742 | 93 | 1.469 | mar 2014 | nov 2026 |
 | Superintendencia del Medio Ambiente | – | – | 149 | 534 | 633 | 872 | 77 | 2.265 | jun 2012 | nov 2026 |
-| FOSIS | – | – | – | – | 951 | 1.064 | 217 | 2.232 | mar 2018 | nov 2026 |
+| FOSIS | – | – | – | – | 951 | 1.111 | 236 | 2.298 | mar 2018 | nov 2026 |
 | SENAMA | – | – | – | 3.947 | 1.516 | 738 | 59 | 6.260 | mar 2014 | nov 2026 |
 | CONADI | – | – | – | 51 | 917 | 725 | 83 | 1.776 | oct 2017 | nov 2026 |
 | INJUV | – | – | – | – | 51 | 135 | 15 | 201 | feb 2021 | nov 2026 |
-| SENADIS | – | 368 | 2.947 | 2.836 | 1.131 | 713 | 120 | 8.115 | ene 2009 | nov 2026 |
+| SENADIS | – | 368 | 2.951 | 2.869 | 1.249 | 811 | 136 | 8.384 | ene 2009 | nov 2026 |
 | SENAPRED | – | – | 8 | 4 | 32 | 287 | 38 | 369 | abr 2010 | nov 2026 |
 | Policía de Investigaciones | – | – | – | 18 | 427 | 266 | 51 | 762 | nov 2017 | nov 2026 |
 | Gendarmería | – | – | – | – | – | 407 | 86 | 493 | ene 2023 | nov 2026 |
 | Servicio Médico Legal | – | – | – | – | 165 | 247 | 72 | 484 | may 2019 | nov 2026 |
-| Servicio de Protección Especializada | – | – | – | – | 19 | 462 | 44 | 525 | oct 2021 | sep 2026 |
+| Servicio de Protección Especializada | – | – | – | – | 19 | 534 | 61 | 614 | oct 2021 | nov 2026 |
 | Servicio de Impuestos Internos | – | – | 132 | 430 | 352 | 303 | 100 | 1.317 | ene 2012 | nov 2026 |
 | Aduanas | – | 679 | 604 | 1.197 | 1.419 | 1.091 | 187 | 5.177 | feb 2007 | nov 2026 |
 | Dirección de Presupuestos | 7 | 16 | 62 | 144 | 132 | 312 | 26 | 699 | abr 2004 | nov 2026 |
@@ -103,6 +109,36 @@ Estado a la última extracción (24 de noviembre de 2026): 473.079 notas de 154 
 | Servicio Nacional de Migraciones | – | – | – | – | – | 258 | 309 | 567 | abr 2022 | nov 2026 |
 | Superintendencia de Servicios Sanitarios | 206 | 189 | 128 | 702 | 691 | 642 | 108 | 2.667 | feb 2001 | nov 2026 |
 | Superintendencia de Casinos de Juego | 55 | 188 | 55 | 107 | 496 | 78 | 10 | 989 | may 2005 | nov 2026 |
+| Corporaciones de Asistencia Judicial (2 sitios) | – | – | – | 411 | 965 | 411 | 19 | 1.806 | ene 2017 | oct 2026 |
+| SERVIU y SEREMI de Vivienda (6 sitios) | – | – | – | 1 | 391 | 1.303 | 248 | 1.943 | jul 2016 | nov 2026 |
+| Administradora de Tribunales Tributarios y de Contratación Pública | – | – | – | 30 | 33 | 15 | 3 | 81 | sep 2015 | sep 2026 |
+| Agencia de Promoción de la Inversión Extranjera | – | – | – | 171 | 377 | 424 | 62 | 1.034 | nov 2015 | nov 2026 |
+| Comisión Administradora del Sistema de Créditos (INGRESA) | – | 45 | 201 | 267 | 140 | 113 | 21 | 787 | ene 2009 | nov 2026 |
+| Comisión Nacional de Riego (CNR) | – | – | – | – | 1.432 | 1.817 | 290 | 3.539 | ago 2018 | nov 2026 |
+| Consejo Nacional de Televisión (CNTV) | – | 1 | 72 | 229 | 316 | 281 | 31 | 930 | ene 2010 | nov 2026 |
+| Defensa Civil de Chile | – | – | – | – | – | 194 | 48 | 242 | ene 2023 | nov 2026 |
+| Dirección General de Aguas (DGA) | – | 6 | 277 | 234 | 297 | 531 | 36 | 1.381 | ene 2010 | nov 2026 |
+| Dirección General de Concesiones (DGC) | – | 20 | 146 | 279 | 295 | 444 | 69 | 1.253 | oct 2009 | nov 2026 |
+| Dirección General de Crédito Prendario (DICREP) | – | – | – | – | 20 | 139 | 44 | 203 | oct 2019 | nov 2026 |
+| Dirección General de Movilización Nacional (DGMN) | – | – | 60 | 159 | 203 | 268 | 64 | 754 | dic 2012 | nov 2026 |
+| Dirección de Aeropuertos (DAP) | – | 6 | 68 | 91 | 71 | 113 | 19 | 368 | jun 2009 | oct 2026 |
+| Dirección de Arquitectura (DARQ) | – | 2 | 254 | 245 | 158 | 81 | 6 | 746 | ene 2010 | nov 2026 |
+| Dirección de Vialidad (VIALIDAD) | – | 13 | – | 12 | 5 | 92 | 64 | 186 | jul 2009 | nov 2026 |
+| Fundación de Comunicación Capacitación y Cultura del Agro (FUCOA) | – | – | 298 | 417 | 470 | 89 | 4 | 1.278 | mar 2011 | sep 2026 |
+| Fundación para la Innovación Agraria (FIA) | – | – | – | 600 | 517 | 407 | 102 | 1.626 | sep 2014 | nov 2026 |
+| Instituto Antártico Chileno (INACH) | – | 35 | 536 | 586 | 409 | 662 | 145 | 2.373 | ago 2006 | nov 2026 |
+| Instituto Nacional de Hidráulica (INH) | – | – | 38 | 37 | 58 | 50 | 24 | 207 | feb 2011 | nov 2026 |
+| Instituto Nacional del Deporte (IND) | – | – | – | – | 1 | 281 | 87 | 369 | oct 2021 | nov 2026 |
+| Instituto de Seguridad Laboral (ISL) | – | – | – | – | – | 724 | 190 | 914 | may 2023 | nov 2026 |
+| Proceso Constitucional | – | – | – | – | – | 408 | – | 408 | mar 2023 | nov 2023 |
+| Servicio Nacional de Reinserción Social Juvenil | – | – | – | – | – | – | 10 | 10 | nov 2026 | nov 2026 |
+| Superintendencia de Educación Superior | – | – | – | – | 183 | 145 | 24 | 352 | may 2019 | nov 2026 |
+| **Salud** | | | | | | | | | | |
+| Hospitales e institutos (36 sitios) | – | – | 282 | 2.035 | 6.278 | 7.268 | 1.556 | 17.419 | ago 2010 | nov 2026 |
+| SEREMI de Salud (1 sitio) | – | – | – | – | – | 399 | 110 | 509 | dic 2022 | nov 2026 |
+| Servicios de salud (7 sitios) | – | – | 107 | 1.171 | 3.415 | 4.477 | 902 | 10.072 | may 2012 | nov 2026 |
+| **Educación pública** | | | | | | | | | | |
+| Servicios Locales de Educación Pública (39 sitios) | – | – | – | 300 | 983 | 4.915 | 2.165 | 8.363 | ago 2016 | nov 2026 |
 | **Gobiernos regionales y delegaciones** | | | | | | | | | | |
 | GORE Arica y Parinacota | – | – | – | – | – | 41 | 153 | 194 | ene 2025 | nov 2026 |
 | GORE Tarapacá | – | – | – | 1.913 | 1.911 | 498 | 119 | 4.441 | dic 2015 | nov 2026 |
@@ -127,6 +163,26 @@ Estado a la última extracción (24 de noviembre de 2026): 473.079 notas de 154 
 | Delegación Valparaíso | – | – | – | – | 118 | 546 | 235 | 899 | jun 2021 | nov 2026 |
 | Delegación Metropolitana | – | – | – | – | 63 | 97 | 22 | 182 | jun 2021 | nov 2026 |
 | Delegación Maule | – | – | – | – | 305 | 950 | 270 | 1.525 | jun 2021 | nov 2026 |
+| **Municipios** | | | | | | | | | | |
+| Municipios de Arica y Parinacota (2 sitios) | – | – | – | – | 97 | 117 | – | 214 | dic 2019 | ene 2026 |
+| Municipios de Tarapacá (2 sitios) | – | 8 | 140 | 913 | 635 | 265 | 62 | 2.023 | abr 2008 | nov 2026 |
+| Municipios de Antofagasta (2 sitios) | – | – | 5 | 116 | 543 | 512 | 143 | 1.319 | sep 2010 | nov 2026 |
+| Municipios de Atacama (5 sitios) | – | – | – | 103 | 218 | 1.533 | 184 | 2.038 | jul 2016 | nov 2026 |
+| Municipios de Coquimbo (6 sitios) | – | – | – | – | 212 | 1.049 | 299 | 1.560 | ene 2020 | nov 2026 |
+| Municipios de Valparaíso (17 sitios) | – | – | – | 579 | 3.950 | 8.956 | 2.116 | 15.601 | mar 2015 | nov 2026 |
+| Municipios de la R. Metropolitana (31 sitios) | – | 123 | 1.228 | 5.892 | 11.428 | 17.378 | 3.990 | 40.052 | sep 2008 | nov 2026 |
+| Municipios de O'Higgins (15 sitios) | – | – | 253 | 893 | 841 | 4.022 | 745 | 6.754 | ago 2012 | nov 2026 |
+| Municipios del Maule (17 sitios) | 1 | – | – | 1.031 | 1.810 | 3.636 | 1.435 | 7.913 | ene 2000 | nov 2026 |
+| Municipios de Ñuble (11 sitios) | – | – | 36 | 625 | 1.335 | 2.635 | 659 | 5.290 | jul 2013 | nov 2026 |
+| Municipios del Biobío (22 sitios) | – | – | 418 | 2.394 | 8.416 | 7.898 | 1.858 | 20.984 | ago 2011 | nov 2026 |
+| Municipios de La Araucanía (15 sitios) | – | – | – | 1.154 | 4.446 | 7.417 | 1.720 | 14.737 | nov 2016 | nov 2026 |
+| Municipios de Los Ríos (7 sitios) | – | 1 | 699 | 1.368 | 4.333 | 5.283 | 1.041 | 12.757 | ago 2009 | nov 2026 |
+| Municipios de Los Lagos (20 sitios) | – | – | 161 | 524 | 2.131 | 4.825 | 1.051 | 8.692 | jun 2011 | nov 2026 |
+| Municipios de Aysén (4 sitios) | – | – | 9 | 180 | 108 | 555 | 116 | 968 | ago 2013 | nov 2026 |
+| Municipios de Magallanes (4 sitios) | – | – | 195 | 826 | 1.026 | 1.267 | 93 | 3.407 | feb 2013 | nov 2026 |
+| Asociaciones de municipios (30 sitios) | – | – | 27 | 584 | 2.752 | 3.744 | 657 | 7.764 | abr 2010 | nov 2026 |
+| Corporaciones municipales (82 sitios) | – | – | 587 | 4.302 | 7.791 | 12.689 | 3.013 | 28.383 | may 2010 | nov 2026 |
+| Fundaciones municipales (1 sitio) | – | – | – | – | 9 | 1 | – | 10 | sep 2020 | dic 2024 |
 | **Fuerzas Armadas** | | | | | | | | | | |
 | Estado Mayor Conjunto | – | – | 42 | 363 | 335 | 349 | 65 | 1.154 | jun 2013 | nov 2026 |
 | Armada de Chile | 2.272 | 4.805 | 3.152 | 2.310 | 3.062 | 3.143 | 436 | 19.183 | abr 2004 | nov 2026 |
@@ -143,9 +199,12 @@ Estado a la última extracción (24 de noviembre de 2026): 473.079 notas de 154 
 | ASMAR | – | – | – | – | 1 | 50 | 10 | 61 | mar 2022 | oct 2026 |
 | ENAER | – | – | – | – | 7 | 6 | 14 | 27 | sep 2018 | oct 2026 |
 | FAMAE | – | – | – | – | – | 5 | 30 | 35 | feb 2025 | nov 2026 |
-| **Universidades estatales** | | | | | | | | | | |
-| Universidad de Chile | 501 | 4.274 | 5.054 | 4.540 | 5.172 | 6.315 | 1.184 | 27.040 | jun 2005 | nov 2026 |
-| Universidad de Santiago | – | – | – | 1 | 1 | 1.605 | 779 | 2.386 | mar 2017 | nov 2026 |
+| Empresas portuarias (4 sitios) | – | – | 109 | 129 | 174 | 554 | 123 | 1.089 | sep 2011 | nov 2026 |
+| Comercializadora de Trigo COTRISA | – | – | – | – | – | 283 | 27 | 310 | mar 2023 | nov 2026 |
+| Fondo de Infraestructura Desarrollo País S.A. | – | – | – | – | 29 | 40 | 3 | 72 | mar 2020 | nov 2026 |
+| **Educación superior estatal** | | | | | | | | | | |
+| Universidad de Chile | 501 | 4.274 | 5.054 | 4.540 | 5.172 | 9.039 | 5.389 | 33.969 | jun 2005 | nov 2026 |
+| Universidad de Santiago | – | – | – | 307 | 3.759 | 3.421 | 850 | 8.337 | ene 2017 | nov 2026 |
 | UTEM | – | – | – | – | – | 44 | 186 | 230 | ene 2026 | nov 2026 |
 | UMCE | – | – | 505 | 1.417 | 1.459 | 1.693 | 410 | 5.484 | dic 2011 | nov 2026 |
 | Universidad de Tarapacá | – | – | 1.059 | 3.151 | 1.968 | 1.182 | 211 | 7.571 | oct 2011 | nov 2026 |
@@ -162,6 +221,8 @@ Estado a la última extracción (24 de noviembre de 2026): 473.079 notas de 154 
 | Universidad de Los Lagos | – | – | – | 230 | 2.579 | 3.430 | 740 | 6.979 | abr 2017 | nov 2026 |
 | Universidad de Aysén | – | – | – | – | 416 | 374 | 85 | 875 | ago 2018 | nov 2026 |
 | Universidad de Magallanes | – | – | – | – | – | 430 | 360 | 790 | jul 2024 | nov 2026 |
+| Centros de formación técnica estatales (10 sitios) | – | – | – | – | 243 | 978 | 355 | 1.576 | jun 2018 | nov 2026 |
+| Consorcio de Universidades del Estado de Chile (CUECh) | – | – | – | – | – | 1.105 | 469 | 1.574 | mar 2024 | nov 2026 |
 | **Organismos autónomos y otros** | | | | | | | | | | |
 | Contraloría General de la República | – | – | – | 265 | 570 | 496 | 160 | 1.522 | dic 2016 | nov 2026 |
 | Ministerio Público | – | – | 902 | 8.936 | 3.986 | 3.668 | 999 | 18.491 | jul 2010 | nov 2026 |
@@ -174,6 +235,8 @@ Estado a la última extracción (24 de noviembre de 2026): 473.079 notas de 154 
 | Consejo para la Transparencia | – | 100 | 438 | 335 | 764 | 349 | 40 | 2.027 | abr 2008 | nov 2026 |
 | Instituto Nacional de Derechos Humanos | – | – | 900 | 1.125 | 1.220 | 1.268 | 220 | 4.733 | sep 2010 | nov 2026 |
 | Defensoría de la Niñez | – | – | – | – | 211 | 479 | 51 | 741 | ago 2018 | nov 2026 |
+| Fundaciones y corporaciones públicas (24 sitios) | 15 | 73 | 122 | 470 | 3.462 | 6.717 | 1.014 | 11.874 | ene 2000 | nov 2026 |
+| Consejo de Rectores de las Universidades Chilenas (CRUCH) | – | – | 246 | 217 | 1.151 | 269 | 77 | 1.960 | may 2010 | nov 2026 |
 | **Congreso** | | | | | | | | | | |
 | Senado | – | 31 | 4.736 | 4.312 | 4.053 | 3.532 | 690 | 17.354 | feb 2010 | nov 2026 |
 | Cámara de Diputadas y Diputados | – | – | – | 464 | 5.353 | 4.457 | 59 | 10.333 | sep 2017 | abr 2026 |
@@ -234,6 +297,17 @@ python scrapers/scraper_sitemap.py --lista
 python scrapers/scraper_dpr.py valparaiso          # delegación presidencial de una región
 ```
 
+### Sujetos obligados por la Ley de Transparencia
+
+```bash
+python scrapers/auditoria_salas_prensa.py             # revisa los organismos del listado del CPLT (unos 20 minutos)
+python scrapers/auditoria_salas_prensa.py --catalogo  # arma scrapers/catalogo_sujetos.csv
+```
+
+La auditoría descarga el listado de organismos del Portal de Transparencia y entra a la portada de cada sitio. Ahí anota todos los menús de noticias, prensa, comunicados, actualidad o novedades, porque un mismo organismo puede publicar en más de uno. En los organismos que ya están en el corpus, entra a cada sección y cuenta cuántas de sus notas ya se descargaron; una sección con varias notas y pocas descargadas es una sección que falta. También registra si el sitio es WordPress y cómo se puede leer: API REST abierta, la misma API por `/?rest_route=` o el sitemap de entradas. El resultado queda en `data/auditoria_salas_prensa.csv`.
+
+Con `--catalogo` se arma `scrapers/catalogo_sujetos.csv`, con los sitios WordPress que aún no están en el corpus, clasificados en los grupos de la tabla. Los scripts `scraper_wp_api.py` y `scraper_sitemap.py` leen ese catálogo, y el orquestador los corre junto con el resto. Sus notas quedan en `data/sujetos/<clave>.csv`. En la tabla y la figura, los sitios de un mismo tipo se suman en una fila; por ejemplo, "Municipios de Valparaíso (14 sitios)". Un sitio que ya está en el catálogo conserva su clave al regenerarlo.
+
 ### Archivo histórico de Presidencia
 
 No forma parte de la actualización periódica. Se corre una vez y es reanudable:
@@ -268,6 +342,8 @@ Los scrapers incluyen pausas entre solicitudes (por defecto, dos descargas simul
 ```
 scrapers/
   fuentes.py                     catálogo de fuentes: archivo, etiqueta y grupo
+  catalogo_sujetos.csv           sujetos obligados que se suman desde la auditoría (WordPress)
+  auditoria_salas_prensa.py      auditoría de salas de prensa sobre el listado del CPLT
   comun.py                       sesión HTTP, fechas, texto y escritura incremental del CSV
   listados.py                    paginación y corte por novedad para listados HTML
   scraper_<organismo>.py         un scraper por sala de prensa con estructura propia
@@ -288,11 +364,21 @@ scrapers/
 figuras/
   cobertura.py                   genera cobertura.png
 data/                            salida de los scrapers (no versionada)
+  sujetos/                       notas de los sitios del catálogo de sujetos obligados
 ```
 
 ## Limitaciones conocidas
 
-**Lo que el corpus no incluye.** Varios sitios exigen una verificación anti-bots, que estos scrapers no intentan sortear: Banco Central, Registro Civil, Tesorería General de la República, Ejército, Fuerza Aérea, BancoEstado, Correos de Chile, ANID, el Gobierno Regional de Los Lagos y la Subsecretaría de Relaciones Económicas Internacionales. Carabineros y la Agencia de Cooperación Internacional (AGCID) estaban fuera de servicio al momento de la extracción, y el dominio de la SEGPRES no respondía. Polla Chilena y el Sistema de Empresas Públicas no publican notas de prensa en su sitio. El Poder Judicial no tiene un listado navegable de su archivo: habría que recorrer unas 150 mil notas por número, varias de ellas de más de 1 MB por las imágenes incrustadas. Las Subsecretarías de Seguridad Pública y de Prevención del Delito no se incluyeron. Desde noviembre de 2026 la Cámara responde con una verificación anti-bots que bloquea su API, por lo que sus notas llegan a abril de 2026. Los servidores de las delegaciones presidenciales dejaron de aceptar conexiones a mitad de la extracción: faltan las de O'Higgins y de Ñuble a Magallanes, y la Metropolitana quedó incompleta.
+**Lo que el corpus no incluye.** Varios sitios exigen una verificación anti-bots, que estos scrapers no intentan sortear: Banco Central, Registro Civil, Tesorería General de la República, Ejército, Fuerza Aérea, BancoEstado, Correos de Chile, ANID, el Gobierno Regional de Los Lagos y la Subsecretaría de Relaciones Económicas Internacionales. Carabineros y la Agencia de Cooperación Internacional (AGCID) estaban fuera de servicio al momento de la extracción, y el dominio de la SEGPRES no respondía. Polla Chilena y el Sistema de Empresas Públicas no publican notas de prensa en su sitio. El Poder Judicial no tiene un listado navegable de su archivo: habría que recorrer unas 150 mil notas por número, varias de ellas de más de 1 MB por las imágenes incrustadas. Las Subsecretarías de Seguridad Pública y de Prevención del Delito no se incluyeron.
+
+Del listado de sujetos obligados quedan fuera:
+- los partidos políticos, que no son organismos del Estado;
+- los sitios WordPress con menos de 10 entradas, que suelen ser sitios de prueba o sin sala de prensa;
+- unos 170 organismos que tienen sección de prensa pero no son WordPress o no exponen ni API, ni sitemap, ni feed, y que requieren un scraper propio;
+- el Tribunal de Propiedad Industrial y SASIPA, cuyas entradas de WordPress son estados diarios del tribunal y avisos de cortes de servicio, no notas de prensa;
+- unos 250 sitios que no respondían al momento de la auditoría.
+
+Desde noviembre de 2026 la Cámara responde con una verificación anti-bots que bloquea su API, por lo que sus notas llegan a abril de 2026. Los servidores de las delegaciones presidenciales dejaron de aceptar conexiones a mitad de la extracción: faltan las de O'Higgins y de Ñuble a Magallanes, y la Metropolitana quedó incompleta.
 
 **Profundidad del archivo.** El corpus contiene lo que cada organismo mantiene publicado. Los sitios se rediseñan y pierden archivo, así que la fecha de inicio indica lo disponible y no el comienzo de la actividad de prensa. Interior y Agricultura ya dejaron de mostrar notas que sí están en extracciones anteriores; una extracción desde cero tendrá menos. Interior no tiene notas entre 2019 y 2021, y SUBTEL no tiene notas en 2008 y 2009. Varios sitios son recientes y su archivo parte en 2024 o después (por ejemplo, Defensa en marzo de 2026, la UTEM en 2026 y varios gobiernos regionales en 2024 y 2025); las delegaciones presidenciales parten en junio de 2021, cuando reemplazaron a las intendencias.
 
@@ -302,16 +388,18 @@ data/                            salida de los scrapers (no versionada)
 - En ODEPA solo entran las noticias institucionales, no los recortes de otros medios ("agro en la prensa").
 - En Trabajo, la FNE, el TDLC, Servel y ChileCompra se toman solo las categorías de noticias, sin resoluciones, normativa ni documentos.
 - En Aduanas las noticias se separan de la normativa con un filtro por URL y contenido; en una muestra, cerca del 4 % de lo que pasa el filtro no era noticia.
-- En la Universidad de Playa Ancha se descarta la sección "UPLA en los medios", que reúne recortes de diarios. En Codelco entran las notas de la casa matriz y no las de cada división. La Universidad de Chile publica columnas de opinión en el mismo portal y se mantienen.
+- En la Universidad de Playa Ancha se descarta la sección "UPLA en los medios", que reúne recortes de diarios. En Codelco entran las notas de la casa matriz y no las de cada división. La Universidad de Chile publica columnas de opinión en el mismo portal y se mantienen. Ese portal reúne las notas de la unidad central, las facultades y los institutos (unas 94 mil); se recorre el archivo completo y no solo el de la unidad central. En la USACH, el listado general omite notas, así que también se recorren sus páginas de categoría. En el SENADIS entran las secciones de sala de prensa y de participación, y en el Servicio de Protección Especializada, las de noticias y de prensa.
 - Algunas delegaciones presidenciales (p. ej. Arica y Parinacota) publican como noticias los llamados a concurso de sus programas.
+- En los sitios del catálogo de sujetos obligados (municipios, corporaciones, servicios de salud, SLEP, etc.) se toman todas las entradas de WordPress, que en esos sitios son las noticias. En algunos se cuelan avisos, concursos de personal, resultados de postulaciones u oficios.
+- En la UMCE se descarta la sección "UMCE en la prensa", que reúne apariciones en otros medios, como en la UPLA.
 
-**Textos incompletos.** Los comunicados de Hacienda solo existen en PDF y no se incluyen; en DIPRES, unas 140 notas solo enlazan a un PDF. Unos 300 comunicados de la CMF, casi todos de 2002 a 2009, traen solo un PDF y quedan sin cuerpo. El sitio de SENDA conserva el texto de sus notas desde 2023: las anteriores (unas 9 mil) solo tienen título, fecha y una bajada truncada, que queda en `resumen`. Unas 450 notas de Energía y 240 de Educación no tienen el texto completo, y unas 110 del Senado solo traen la bajada.
+**Textos incompletos.** Los comunicados de Hacienda solo existen en PDF y no se incluyen; en DIPRES, unas 140 notas solo enlazan a un PDF. Unos 300 comunicados de la CMF, casi todos de 2002 a 2009, traen solo un PDF y quedan sin cuerpo. El sitio de SENDA conserva el texto de sus notas desde 2023: las anteriores (unas 9 mil) solo tienen título, fecha y una bajada truncada, que queda en `resumen`. Unas 450 notas de Energía y 240 de Educación no tienen el texto completo, y unas 110 del Senado solo traen la bajada. En la USACH hay unas 40 notas publicadas dos veces con URL distinta (`nota` y `nota-0`); conviene deduplicarlas por título, fecha y texto al analizar. En los sitios del catálogo, unas 520 entradas no tienen título en WordPress (la página solo muestra el nombre del sitio) y su título queda vacío. El servidor de la Municipalidad de San Ramón respondía con errores de saturación: la mayoría de sus 159 notas quedó sin cuerpo.
 
-**Fechas.** Algunos sitios muestran una fecha de migración en sus notas más antiguas: SENAMA y CONADI (octubre de 2017) y SENCE (marzo de 2019). Unas 30 notas de la Contraloría y una del Consejo para la Transparencia no tienen fecha porque el sitio publica una fecha imposible (1970 y el año 0201). Diez notas de SUBTEL no tienen fecha.
+**Fechas.** Algunos sitios muestran una fecha de migración en sus notas más antiguas: SENAMA y CONADI (octubre de 2017) y SENCE (marzo de 2019). Unas 30 notas de la Contraloría y una del Consejo para la Transparencia no tienen fecha porque el sitio publica una fecha imposible (1970 y el año 0201). Diez notas de SUBTEL y seis de la Subsecretaría de Hacienda no tienen fecha.
 
 **Presidencia.** El archivo en la Wayback Machine es parcial, sobre todo antes de 2018, y la selección de gob.cl depende del título: puede incluir notas de gabinete que nombran al Presidente y omitir actividades presidenciales con otro título. Unas 370 notas de gob.cl también están entre los comunicados, con otra URL.
 
-**Detalles técnicos.** Gendarmería no tiene una página por nota: la URL registrada es la de su API de detalle. El Instituto de Previsión Social y ENAMI arman su listado en el navegador, por lo que sus scrapers usan Playwright. La Superintendencia de Educación tiene un sitemap incompleto y sus notas recientes se toman del RSS. En Economía, unas cien notas tienen la página rota y su título y texto se toman del RSS. Los sitios de las delegaciones presidenciales cortan las conexiones cuando reciben muchas a la vez: si una región termina antes de tiempo, basta con volver a correrla con `--completo`.
+**Detalles técnicos.** Gendarmería no tiene una página por nota: la URL registrada es la de su API de detalle. El Instituto de Previsión Social y ENAMI arman su listado en el navegador, por lo que sus scrapers usan Playwright. La Superintendencia de Educación tiene un sitemap incompleto y sus notas recientes se toman del RSS. En Economía, unas cien notas tienen la página rota y su título y texto se toman del RSS. Hacienda publica en dos secciones, la del ministerio y la de la Subsecretaría (`/subsecretaria/noticias`); ambas quedan en `hacienda.csv`, con la institución emisora de cada nota. En los sitios del catálogo sin una plantilla conocida, el cuerpo es el bloque de la página con más texto en párrafos. Cuando la API no está disponible, la fecha se toma del feed RSS, sin los parámetros de seguimiento (`utm_`) que algunos sitios agregan a los enlaces. Los sitios de las delegaciones presidenciales cortan las conexiones cuando reciben muchas a la vez: si una región termina antes de tiempo, basta con volver a correrla con `--completo`.
 
 ## Licencia
 

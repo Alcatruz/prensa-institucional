@@ -26,8 +26,9 @@ import sys
 
 from bs4 import BeautifulSoup
 
-from comun import (DATA, SalidaCSV, argumentos, configurar_log, en_paralelo, fecha_iso,
-                   fecha_meta, limpiar, obtener, sesion, texto_de)
+from comun import (DATA, SalidaCSV, argumentos, configurar_log, cuerpo_por_densidad, en_paralelo,
+                   fecha_iso, fecha_meta, limpiar, obtener, sesion, texto_de)
+from fuentes import SUJETOS
 
 log = configurar_log("wp_api")
 
@@ -117,6 +118,15 @@ SITIOS = {
                     institucion="Universidad del Bío-Bío"),
 }
 
+# Sujetos obligados por la Ley de Transparencia del catálogo (auditoria_salas_prensa.py
+# --catalogo): se toman todas las entradas (posts) del sitio, que en estos sitios son
+# las noticias; las notas quedan en data/sujetos/<clave>.csv.
+for _s in SUJETOS:
+    if _s["metodo"].startswith("wp_api") and _s["clave"] not in SITIOS:
+        SITIOS[_s["clave"]] = dict(base=_s["base"], institucion=_s["institucion"],
+                                   archivo=f"sujetos/{_s['clave']}",
+                                   rest_route=_s["metodo"] == "wp_api_rest_route")
+
 POR_PAGINA = 100
 SELECTORES_CUERPO = [".elementor-widget-theme-post-content", ".entry-content", ".post-content",
                      "article .content", ".single-content", "article", "main"]
@@ -161,7 +171,8 @@ def cuerpo_desde_pagina(s, url: str, pausa: float, propios=()) -> tuple[str, str
         t = texto_de(el) if el else ""
         if palabras(t) >= 40:
             return t, fecha
-    return "", fecha
+    t = cuerpo_por_densidad(soup)   # plantilla desconocida: el bloque con más texto en párrafos
+    return (t, fecha) if palabras(t) >= 40 else ("", fecha)
 
 
 def main():
@@ -178,7 +189,7 @@ def main():
     if args.sitio not in SITIOS:
         sys.exit(f"Sitio desconocido: {args.sitio}. Usa --lista.")
     cfg = SITIOS[args.sitio]
-    salida = SalidaCSV(args.salida or DATA / f"{args.sitio}.csv")
+    salida = SalidaCSV(args.salida or DATA / f"{cfg.get('archivo', args.sitio)}.csv")
     s = sesion()
     filtro = re.compile(cfg["filtro_url"]) if cfg.get("filtro_url") else None
     log.info("%s: %s (%d notas ya guardadas)", args.sitio, cfg["institucion"], salida.previas)

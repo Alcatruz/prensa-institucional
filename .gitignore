@@ -64,6 +64,8 @@
 !/scrapers/scraper_defensa_empresas.py
 !/scrapers/run_todos_paralelo.py
 !/scrapers/consolidar_prensa.py
+!/scrapers/auditoria_salas_prensa.py
+!/scrapers/catalogo_sujetos.csv
 
 !/data/
 /data/*

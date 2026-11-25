@@ -28,6 +28,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
 from pathlib import Path
 
+from fuentes import SUJETOS
 from fusionar_respaldo import fusionar
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -107,6 +108,13 @@ for _script, _sitios in FAMILIAS.items():
     for _sitio in _sitios:
         SCRAPERS.append((_sitio, _script, f"data/{_sitio}.csv"))
         ARGS_EXTRA[_sitio] = [_sitio] + ARGS_EXTRA.get(_sitio, [])
+# sujetos obligados del catálogo (scrapers/catalogo_sujetos.csv): data/sujetos/<clave>.csv
+_SCRIPT_SUJETO = {"wp_api": "scrapers/scraper_wp_api.py", "wp_api_rest_route": "scrapers/scraper_wp_api.py",
+                  "wp_sitemap": "scrapers/scraper_sitemap.py", "wp_rss": "scrapers/scraper_sitemap.py"}
+for _s in SUJETOS:
+    if _s["metodo"] in _SCRIPT_SUJETO:
+        SCRAPERS.append((_s["clave"], _SCRIPT_SUJETO[_s["metodo"]], f"data/sujetos/{_s['clave']}.csv"))
+        ARGS_EXTRA[_s["clave"]] = [_s["clave"]]
 
 csv.field_size_limit(min(sys.maxsize, 2**31 - 1))
 
@@ -161,9 +169,10 @@ def correr_uno(nombre, script, csvrel, state, timeout):
 
     # Respaldo previo (si ya hay uno de hoy, se conserva el primero)
     csv_path = ROOT / csvrel
-    respaldo = RESPALDO / csv_path.name
+    relativo = csv_path.relative_to(DATA).with_suffix("").as_posix()   # p. ej. sujetos/<clave>
+    respaldo = RESPALDO / f"{relativo}.csv"
     if csv_path.exists() and not respaldo.exists():
-        RESPALDO.mkdir(exist_ok=True)
+        respaldo.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(csv_path, respaldo)
 
     t0 = time.monotonic()
@@ -190,7 +199,7 @@ def correr_uno(nombre, script, csvrel, state, timeout):
     # Union con el respaldo por URL
     if respaldo.exists():
         try:
-            fusionar(csv_path.stem, RESPALDO)
+            fusionar(relativo, RESPALDO)
         except Exception as e:  # el CSV queda como lo dejo el scraper
             print(f"  ! {nombre}: no se pudo unir con el respaldo ({e})", flush=True)
 

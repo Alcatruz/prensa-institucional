@@ -6,15 +6,18 @@ no tiene una API WordPress abierta (requests + BeautifulSoup).
 
 Uso:
     python scrapers/scraper_universidades.py <sitio> [--muestra N] [--completo]
-                                             [--pagina-inicial N] [--salida RUTA]
+                                             [--pagina-inicial N] [--max-paginas N] [--salida RUTA]
                                              [--hilos 2] [--pausa 1.0]
     python scrapers/scraper_universidades.py --lista
 
 Sitios y fuentes (cada uno escribe data/<sitio>.csv):
-    uchile    Universidad de Chile            uchile.cl/noticias/archivo/organismo/3065/N (15 por página;
-                                              incluye las columnas de opinión que publica el portal)
-    usach     Universidad de Santiago         usach.cl/lista-noticias?page=N-1 (12 por página; el listado
-                                              llega hasta mayo de 2024)
+    uchile    Universidad de Chile            uchile.cl/noticias/archivo/N (15 por página; archivo de todo el
+                                              portal: unidad central, facultades, institutos y columnas de
+                                              opinión; /archivo/organismo/3065/N solo trae la unidad central)
+    usach     Universidad de Santiago         usach.cl/lista-noticias?page=N-1 (12 por página; llega hasta
+                                              mediados de 2024) más las páginas de categoría
+                                              /taxonomy/term/<id>?page=N-1 (10 por página), que incluyen
+                                              notas que el listado general omite (slugs terminados en -0)
     uv        Universidad de Valparaíso       uv.cl/archivo-noticias-uv?start=(N-1)*12 (Joomla)
     unap      Universidad Arturo Prat         actualidad.unap.cl (Prontus): ocho listados por
                                               categoría (taxport_87_<cat>__N), unidos y deduplicados
@@ -26,7 +29,8 @@ Sitios y fuentes (cada uno escribe data/<sitio>.csv):
 Estrategia: se recorre el listado desde lo más reciente; de cada nota se entra a su página para
 tomar el texto íntegro. Reanudable (las URLs ya presentes en el CSV no se vuelven a bajar) y, salvo
 --completo, el recorrido se corta tras 3 páginas seguidas sin notas nuevas. --pagina-inicial permite
-probar páginas antiguas del listado.
+probar páginas antiguas del listado y --max-paginas acota el recorrido de cada listado (por ejemplo, para
+rellenar por tramos un archivo muy largo como el de la Universidad de Chile).
 """
 import html
 import re
@@ -72,6 +76,14 @@ def listado_uchile(base):
 def listado_usach(base):
     def parsear(soup):
         out = []
+        # páginas de categoría (taxonomy/term): tarjetas article dentro de .views-row
+        for art in soup.select(".view-taxonomy-term .views-row article"):
+            a = art.select_one("h2 a[href]")
+            if not a:
+                continue
+            t = art.select_one("time[datetime]")
+            out.append({"url": L.url_limpia(base, a["href"]), "titulo": txt(a),
+                        "fecha": fecha_iso(t["datetime"]) if t else "", "resumen": ""})
         for li in soup.select(".noticias-list li.col-lg-4"):
             a = li.select_one("a[href]")
             if not a:
@@ -217,18 +229,25 @@ class Sitio:
     listado: Callable | None = None
     listar: Callable | None = None                # listado propio (reemplaza a paginas)
     hilos: int = 2
+    seen_compartido: bool = True                  # False: cada sección repite URLs ya vistas en otras
 
+
+# categorías de noticias del portal de la USACH (taxonomy/term/<id>); las de la 1 a la 6 y de la
+# 9 a la 31 no tienen noticias
+TERMINOS_USACH = [7, 8, *range(32, 46), *range(47, 55)]
 
 TAX_UNAP = {"universidad": 126, "estudiantes": 127, "docencia": 128, "vinculacion": 129,
             "investigacion": 130, "internacional": 133, "cultura": 132, "comunidad": 135}
 
 SITIOS = {s.slug: s for s in [
     Sitio("uchile", "Universidad de Chile", "https://uchile.cl/", nota_uchile,
-          [("noticias", lambda n: f"https://uchile.cl/noticias/archivo/organismo/3065/{n}")],
+          [("noticias", lambda n: f"https://uchile.cl/noticias/archivo/{n}")],
           listado_uchile),
     Sitio("usach", "Universidad de Santiago de Chile", "https://www.usach.cl/", nota_usach,
-          [("noticias", lambda n: f"https://www.usach.cl/lista-noticias?page={n - 1}")],
-          listado_usach),
+          [("noticias", lambda n: f"https://www.usach.cl/lista-noticias?page={n - 1}")]
+          + [(f"cat{c}", (lambda c: lambda n: f"https://www.usach.cl/taxonomy/term/{c}?page={n - 1}")(c))
+             for c in TERMINOS_USACH],
+          listado_usach, seen_compartido=False),
     Sitio("uv", "Universidad de Valparaíso", "https://www.uv.cl/", nota_uv,
           [("noticias", lambda n: f"https://www.uv.cl/archivo-noticias-uv?start={(n - 1) * 12}")],
           listado_uv),
@@ -250,6 +269,7 @@ def main():
     ap.add_argument("--lista", action="store_true", help="muestra los sitios configurados")
     ap.add_argument("--completo", action="store_true", help="recorre todas las páginas (sin corte por novedad)")
     ap.add_argument("--pagina-inicial", type=int, default=1, help="primera página del listado (pruebas)")
+    ap.add_argument("--max-paginas", type=int, default=3000, help="tope de páginas por listado")
     args = ap.parse_args()
     if args.lista or not args.sitio:
         for k, v in SITIOS.items():
@@ -292,7 +312,9 @@ def main():
                 inicial = args.pagina_inicial
                 items += L.recorrer_listado(
                     s, salida, lambda n: url_pagina(n + inicial - 1), cfg.listado(cfg.base), args.pausa,
-                    completo=args.completo, muestra=falta, etiqueta=f"{cfg.slug}/{etiqueta}", seen=vistas)
+                    completo=args.completo, muestra=falta, etiqueta=f"{cfg.slug}/{etiqueta}",
+                    seen=vistas if cfg.seen_compartido else set(), max_paginas=args.max_paginas)
+            items = list({it["url"]: it for it in items}.values())
         L.ejecutar(items, procesar, salida, args.hilos or cfg.hilos, etiqueta=cfg.slug)
     except L.Desafio as e:
         log.error("Desafío anti-bots en %s: se detiene %s sin intentar saltarlo", e, cfg.slug)

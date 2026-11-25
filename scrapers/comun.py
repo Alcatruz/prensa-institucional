@@ -216,6 +216,26 @@ def texto_de(el) -> str:
     return "\n".join(x for x in lineas if x)
 
 
+def cuerpo_por_densidad(soup) -> str:
+    """Texto del bloque que reúne más texto en párrafos (<p>), para plantillas sin selector conocido.
+
+    Cada párrafo suma su largo a su contenedor; gana el contenedor con más texto.
+    Se ignoran los párrafos dentro de menús, encabezados, pies y formularios."""
+    puntaje: dict[int, int] = {}
+    nodos = {}
+    for p in soup.find_all("p"):
+        if p.find_parent(["nav", "footer", "header", "aside", "form"]):
+            continue
+        n = len(p.get_text(" ", strip=True))
+        if n < 25 or p.parent is None:
+            continue
+        puntaje[id(p.parent)] = puntaje.get(id(p.parent), 0) + n
+        nodos[id(p.parent)] = p.parent
+    if not puntaje:
+        return ""
+    return texto_de(nodos[max(puntaje, key=puntaje.get)])
+
+
 def limpiar(texto: str) -> str:
     return re.sub(r"\s+", " ", texto or "").strip()
 

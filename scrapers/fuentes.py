@@ -5,16 +5,26 @@ Catálogo de fuentes del corpus: archivo, etiqueta corta y grupo.
 
 Lo usan consolidar_prensa.py, cobertura_por_gobierno.py y las figuras, para que
 la lista de organismos esté en un solo lugar.
+
+Además de las fuentes de abajo, se suman los sujetos obligados por la Ley de
+Transparencia que lista catalogo_sujetos.csv (municipios, servicios de salud,
+SLEP, etc.; ver auditoria_salas_prensa.py). Sus notas quedan en data/sujetos/ y,
+en las tablas y la figura, se agregan por tipo (columna `fila` del catálogo).
 """
+import csv
+from pathlib import Path
 
 GRUPOS = [
     "Presidencia",
     "Ministerios y subsecretarías",
     "Servicios públicos",
+    "Salud",
+    "Educación pública",
     "Gobiernos regionales y delegaciones",
+    "Municipios",
     "Fuerzas Armadas",
     "Empresas públicas",
-    "Universidades estatales",
+    "Educación superior estatal",
     "Organismos autónomos y otros",
     "Congreso",
 ]
@@ -159,24 +169,24 @@ FUENTES = [
     ("enaer", "ENAER", "Empresas públicas"),
     ("famae", "FAMAE", "Empresas públicas"),
 
-    ("uchile", "Universidad de Chile", "Universidades estatales"),
-    ("usach", "Universidad de Santiago", "Universidades estatales"),
-    ("utem", "UTEM", "Universidades estatales"),
-    ("umce", "UMCE", "Universidades estatales"),
-    ("uta", "Universidad de Tarapacá", "Universidades estatales"),
-    ("unap", "Universidad Arturo Prat", "Universidades estatales"),
-    ("uantof", "Universidad de Antofagasta", "Universidades estatales"),
-    ("uda", "Universidad de Atacama", "Universidades estatales"),
-    ("userena", "Universidad de La Serena", "Universidades estatales"),
-    ("uv", "Universidad de Valparaíso", "Universidades estatales"),
-    ("upla", "Universidad de Playa Ancha", "Universidades estatales"),
-    ("uoh", "Universidad de O'Higgins", "Universidades estatales"),
-    ("utalca", "Universidad de Talca", "Universidades estatales"),
-    ("ubiobio", "Universidad del Bío-Bío", "Universidades estatales"),
-    ("ufro", "Universidad de La Frontera", "Universidades estatales"),
-    ("ulagos", "Universidad de Los Lagos", "Universidades estatales"),
-    ("uaysen", "Universidad de Aysén", "Universidades estatales"),
-    ("umag", "Universidad de Magallanes", "Universidades estatales"),
+    ("uchile", "Universidad de Chile", "Educación superior estatal"),
+    ("usach", "Universidad de Santiago", "Educación superior estatal"),
+    ("utem", "UTEM", "Educación superior estatal"),
+    ("umce", "UMCE", "Educación superior estatal"),
+    ("uta", "Universidad de Tarapacá", "Educación superior estatal"),
+    ("unap", "Universidad Arturo Prat", "Educación superior estatal"),
+    ("uantof", "Universidad de Antofagasta", "Educación superior estatal"),
+    ("uda", "Universidad de Atacama", "Educación superior estatal"),
+    ("userena", "Universidad de La Serena", "Educación superior estatal"),
+    ("uv", "Universidad de Valparaíso", "Educación superior estatal"),
+    ("upla", "Universidad de Playa Ancha", "Educación superior estatal"),
+    ("uoh", "Universidad de O'Higgins", "Educación superior estatal"),
+    ("utalca", "Universidad de Talca", "Educación superior estatal"),
+    ("ubiobio", "Universidad del Bío-Bío", "Educación superior estatal"),
+    ("ufro", "Universidad de La Frontera", "Educación superior estatal"),
+    ("ulagos", "Universidad de Los Lagos", "Educación superior estatal"),
+    ("uaysen", "Universidad de Aysén", "Educación superior estatal"),
+    ("umag", "Universidad de Magallanes", "Educación superior estatal"),
 
     ("contraloria", "Contraloría General de la República", "Organismos autónomos y otros"),
     ("fiscalia", "Ministerio Público", "Organismos autónomos y otros"),
@@ -193,6 +203,32 @@ FUENTES = [
     ("senado", "Senado", "Congreso"),
     ("camara_diputados", "Cámara de Diputadas y Diputados", "Congreso"),
 ]
+
+
+
+def _sujetos() -> list[dict]:
+    ruta = Path(__file__).with_name("catalogo_sujetos.csv")
+    if not ruta.exists():
+        return []
+    with open(ruta, encoding="utf-8", newline="") as fh:
+        return list(csv.DictReader(fh))
+
+
+SUJETOS = _sujetos()
+# nombres del listado del CPLT demasiado largos para la tabla y la figura
+_ETIQUETAS_CORTAS = {
+    "Administradora de los Tribunales Tributarios y Aduaneros y del Tribunal de Contratación Pública":
+        "Administradora de Tribunales Tributarios y de Contratación Pública",
+    "Comisión Administradora del Sistema de Créditos para Estudios Superiores (INGRESA)":
+        "Comisión Administradora del Sistema de Créditos (INGRESA)",
+}
+# archivo -> etiqueta de la fila agregada en tablas y figura (solo los que se agregan)
+FILA_AGREGADA = {f"sujetos/{s['clave']}": s["fila"] for s in SUJETOS if s["fila"]}
+# los sujetos van antes del Congreso para respetar el orden de los grupos
+_congreso = [f for f in FUENTES if f[2] == "Congreso"]
+FUENTES = [f for f in FUENTES if f[2] != "Congreso"] \
+    + [(f"sujetos/{s['clave']}", _ETIQUETAS_CORTAS.get(s["institucion"], s["institucion"]), s["grupo"])
+       for s in SUJETOS] + _congreso
 
 # Fuentes que no entran al consolidado de prensa institucional: los discursos y la
 # selección de gob.cl son complementarias a los comunicados; el Congreso va aparte.

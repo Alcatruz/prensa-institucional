@@ -105,7 +105,7 @@ def recorrer_listado(s, salida, url_pagina, parsear, pausa: float, completo: boo
             log.info("%s: fin en la página %d (sin respuesta)", etiqueta, n)
             break
         filas = parsear(soup)
-        if not filas and n > 1:  # una página vacía a mitad de camino puede ser un error pasajero
+        if not filas:  # una página vacía puede ser un error pasajero (también la primera de un tramo)
             time.sleep(15)
             soup = bajar_soup(s, url, pausa, sin_comentarios)
             filas = parsear(soup) if soup is not None else []
