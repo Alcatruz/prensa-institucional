@@ -20,6 +20,13 @@ Sitios y fuentes:
     senadis    Servicio Nacional de la Discapac.  senadis.gob.cl/{sala_prensa,participacion,endisc}/noticias/page/N (desde 1;
                                                   el mismo ID de nota puede repetirse entre secciones y se guarda una vez)
 
+    Con el lector genérico por_enlaces (enlaces que calzan con la forma de URL de las notas; título,
+    fecha y cuerpo desde la nota): Gobierno Digital, Laboratorio de Gobierno, CNEP, Subsecretarías
+    de Defensa y de las FF.AA., CFA, SBAP, CAPREDENA, INN, CIREN, INFOR, INAPI, UAF, AGCID, Consejo
+    de Auditoría Interna, ECONSSA y las empresas portuarias de Valparaíso, Arica, Chacabuco y Puerto
+    Montt. Opciones: paso (listados por desplazamiento, ?start=N) y paginas (páginas enumeradas en
+    el menú de la primera, sin número).
+
 Estrategia: se recorre el listado página a página (la más reciente primero); de cada página
 se bajan en paralelo las notas que aún no están en el CSV, entrando al enlace de cada una para
 extraer el texto íntegro. Datos del listado: título, fecha y, si existe, bajada (resumen);
@@ -45,8 +52,8 @@ from urllib.parse import quote, unquote, urljoin, urlsplit, urlunsplit
 from bs4 import BeautifulSoup
 
 import comun
-from comun import (DATA, SalidaCSV, argumentos, configurar_log, en_paralelo, fecha_iso, fecha_meta,
-                   limpiar, obtener, sesion, texto_de)
+from comun import (DATA, SalidaCSV, argumentos, configurar_log, cuerpo_por_densidad, en_paralelo,
+                   fecha_iso, fecha_meta, limpiar, obtener, sesion, texto_de)
 
 log = configurar_log("listados")
 
@@ -164,6 +171,41 @@ def listado_senadis(soup, base):
     return out
 
 
+RE_FECHA_INICIAL = re.compile(r"^\s*\d{1,2}/\d{1,2}/\d{4}\s*")
+
+
+def por_enlaces(patron, contenedor=None, excluir=None, fecha_url=None, fecha_en_enlace=False):
+    """Lector genérico: los enlaces del listado que calzan con `patron` (dentro de `contenedor`,
+    si se indica). El título es el texto más largo del enlace; la fecha sale de la URL
+    (`fecha_url`, con grupos a, m y d), del texto del enlace o, si no, de la nota."""
+    rx, rx_ex = re.compile(patron), re.compile(excluir) if excluir else None
+    rx_f = re.compile(fecha_url) if fecha_url else None
+
+    def leer(soup, base):
+        raices = soup.select(contenedor) if contenedor else [soup]
+        vistos: dict[str, str] = {}
+        for raiz in raices:
+            for a in raiz.find_all("a", href=True):
+                u = normalizar(base, a["href"])
+                if not rx.search(u) or (rx_ex and rx_ex.search(u)):
+                    continue
+                t = txt(a)
+                if len(t) > len(vistos.get(u, "")):
+                    vistos[u] = t
+                else:
+                    vistos.setdefault(u, t)
+        out = []
+        for u, t in vistos.items():
+            fecha = ""
+            if rx_f and (m := rx_f.search(u)):
+                fecha = f"{m['a']}-{m['m']}-{m['d']}"
+            elif fecha_en_enlace:
+                fecha = fecha_iso(t)
+            out.append({"url": u, "titulo": RE_FECHA_INICIAL.sub("", t), "fecha": fecha, "resumen": ""})
+        return out
+    return leer
+
+
 # ---------------------------------------------------------------------------
 # Configuración por sitio
 # ---------------------------------------------------------------------------
@@ -233,6 +275,131 @@ SITIOS = {
         cuerpo=["div.cont_contenidos #contenido"],
         resumen="#contenido > ul",
         quitar=[".cont_img", "p.fecha", "h2.modifica", ".clear"]),
+    # agenda digital y modernización del Estado
+    "gobierno_digital": dict(
+        institucion="Secretaría de Gobierno Digital",
+        secciones=[("https://digital.gob.cl/media/noticias/?p={n}", 1)],
+        listado=por_enlaces(r"digital\.gob\.cl/media/noticias/[^/?]+/?$"),
+        cuerpo=["article.section-article div.section-body div.col-lg-8"], titulo=["h1"], quitar=[]),
+    "laboratorio_gobierno": dict(
+        institucion="Laboratorio de Gobierno",
+        # Webflow: la paginación usa un parámetro propio; la fecha (d/m/a) viene en el enlace
+        secciones=[("https://www.lab.gob.cl/noticias?ed09641b_page={n}", 1)],
+        listado=por_enlaces(r"lab\.gob\.cl/noticias/[^/?]+$", fecha_en_enlace=True),
+        cuerpo=["section.section-27 .rich_txt"], densidad=True, quitar=[]),
+    "cnep": dict(
+        institucion="Comisión Nacional de Evaluación y Productividad",
+        # una página por período: la actual y tres de archivo (?foco=)
+        secciones=[("https://cnep.cl/prensa/comunicados-de-prensa", 1)] + [
+            ("https://cnep.cl/prensa/comunicados-de-prensa?foco=/prensa/comunicados-de-prensa/" + s, 1) for s in (
+                "economista-de-cnep-jose-ignacio-donoso-acudira-becado-a-programa-de-magister-en-politicas-"
+                "publicas-y-nuevas-tecnologias-en-sciencespo-paris",
+                "comision-de-productividad-se-reunio-con-ministro-de-economia-juan-andres-fontaine",
+                "comision-de-productividad-estuvo-presente-en-4o-summit-pais-digital")],
+        listado=por_enlaces(r"cnep\.cl/prensa/comunicados-de-prensa/[^/?]+$"),
+        cuerpo=["div.body-main-center div.cuerpo"], fecha=["article.nodo header time"],
+        titulo=["og"], quitar=[]),
+    "subsecretaria_defensa": dict(
+        institucion="Subsecretaría de Defensa",
+        # copia estática del sitio: la primera página no lleva número; la fecha va en la URL
+        secciones=[("https://www.ssdefensa.cl/cat-noticias.html", 1),
+                   ("https://www.ssdefensa.cl/cat-noticias-page-{n}.html", 2)],
+        listado=por_enlaces(r"ssdefensa\.cl/n\d+_\d{2}-\d{2}-\d{4}\.html$",
+                            fecha_url=r"_(?P<d>\d{2})-(?P<m>\d{2})-(?P<a>\d{4})\.html$"),
+        cuerpo=["article.post section.body"], titulo=["article.post header h2.title"], quitar=[]),
+    "subsecretaria_ffaa": dict(
+        institucion="Subsecretaría para las Fuerzas Armadas",
+        secciones=[("https://www.ssffaa.gob.cl/category/noticias/index.html", 1),
+                   ("https://www.ssffaa.gob.cl/category/noticias/page/{n}/index.html", 2)],
+        listado=por_enlaces(r"ssffaa\.gob\.cl/[^/]+/index\.html$", contenedor="article.mg-posts-sec-post"),
+        cuerpo=[], densidad=True, fecha=[".mg-blog-post-box .mg-blog-date"], titulo=["h1"], quitar=[]),
+    # servicios públicos
+    "cfa": dict(
+        institucion="Consejo Fiscal Autónomo",
+        # sin número de página: el menú de la primera enumera las demás (?foco=<nota>)
+        secciones=[("https://cfachile.cl/noticias", 1)], paginas="a.dropdown-item[href*='foco=']",
+        listado=por_enlaces(r"cfachile\.cl/noticias/[^/?]+$", fecha_en_enlace=True),
+        cuerpo=["article div.cuerpo"], titulo=["h1"], quitar=[]),
+    "sbap": dict(
+        institucion="Servicio de Biodiversidad y Áreas Protegidas",
+        secciones=[("https://sbap.gob.cl/sala-de-prensa/noticias-y-comunicados", 1)],   # todo en una página
+        listado=por_enlaces(r"/noticias-y-comunicados/detalle/\d{4}/\d{2}/\d{2}/",
+                            fecha_url=r"/detalle/(?P<a>\d{4})/(?P<m>\d{2})/(?P<d>\d{2})/"),
+        cuerpo=[".content-com__txt"], titulo=["h1"], quitar=[]),
+    "capredena": dict(
+        institucion="Caja de Previsión de la Defensa Nacional",
+        secciones=[("https://www.capredena.gob.cl/noticias/page/{n}", 1)],
+        listado=por_enlaces(r"capredena\.gob\.cl/noticias/\d{4}/\d{2}/\d{2}/",
+                            fecha_url=r"/noticias/(?P<a>\d{4})/(?P<m>\d{2})/(?P<d>\d{2})/"),
+        cuerpo=[".tarjeta .sfnewsContent"], quitar=[]),
+    "inn": dict(
+        institucion="Instituto Nacional de Normalización",
+        secciones=[("https://www.inn.cl/listado-noticias/?page={n}", 1)],
+        listado=por_enlaces(r"inn\.cl/contenedor-de-noticias/[^/?]+/?$"),
+        cuerpo=["article.news-content"], fecha=["header.news-detail-header"], titulo=["h1"], quitar=[]),
+    "ciren": dict(
+        institucion="Centro de Información de Recursos Naturales",
+        secciones=[("https://www.ciren.cl/noticias?pagina={n}", 1)],
+        listado=por_enlaces(r"ciren\.cl/noticia\.php\?id=\d+$"),
+        cuerpo=[".news-detail-body"], titulo=["h1"], quitar=[]),
+    "infor": dict(
+        institucion="Instituto Forestal",
+        secciones=[("https://www.infor.cl/index.php/noticias?start={n}", 0)], paso=12,   # Joomla
+        listado=por_enlaces(r"infor\.cl/index\.php/noticias/\d+-"),
+        cuerpo=[], densidad=True, quitar=[]),
+    "inapi": dict(
+        institucion="Instituto Nacional de Propiedad Industrial",
+        secciones=[("https://www.inapi.cl/sala-de-prensa/noticias/todas-las-noticias/{n}", 1)],
+        listado=por_enlaces(r"inapi\.cl/sala-de-prensa/detalle-noticia/[^/?]+$"),
+        cuerpo=[".texto-noticia"], fecha=["section.noticia-detalle"], quitar=[]),   # el h1 dice "Detalle"
+    "uaf": dict(
+        institucion="Unidad de Análisis Financiero",
+        secciones=[("https://www.uaf.cl/es-cl/noticias-lista?page={n}", 1)],
+        listado=por_enlaces(r"uaf\.cl/es-cl/noticia-detalle\?id=\d+$"),
+        cuerpo=[".texto_detalle_noticia"], fecha=[".noticia-detalle .meta-info .fecha"], titulo=["h1"],
+        quitar=[]),
+    "agcid": dict(
+        institucion="Agencia Chilena de Cooperación Internacional para el Desarrollo",
+        secciones=[("https://www.agcid.gob.cl/sala-de-prensa?start={n}", 0)], paso=12,   # Joomla
+        listado=por_enlaces(r"agcid\.gob\.cl/noticias/\d+-"),
+        cuerpo=[], densidad=True, titulo=["h1"], quitar=[]),
+    "auditoria_interna": dict(
+        institucion="Consejo de Auditoría Interna General de Gobierno",
+        # las notas cuelgan de la raíz del sitio: se toman las tarjetas del listado
+        secciones=[("https://www.auditoriainternadegobierno.gob.cl/noticias/page/{n}/", 1)],
+        listado=por_enlaces(r"auditoriainternadegobierno\.gob\.cl/[^/?#]+/?$", contenedor="div.box-notice",
+                            excluir=r"\.cl/noticias/?$"),
+        cuerpo=[], densidad=True, fecha=["p.date"], titulo=["h1"], quitar=[]),
+    # empresas públicas
+    "econssa": dict(
+        institucion="Empresa Concesionaria de Servicios Sanitarios",
+        secciones=[("https://www.econssachile.cl/comunicaciones/comunicados?start={n}", 0)], paso=10,
+        listado=por_enlaces(r"econssachile\.cl/comunicaciones/comunicados/\d+-"),
+        cuerpo=[".com-content-article__body"], quitar=[]),   # el h1 dice "Comunicados"
+    "puerto_valparaiso": dict(
+        institucion="Empresa Portuaria Valparaíso",
+        secciones=[("https://www.puertovalparaiso.cl/noticias/p/{n}", 1)],
+        listado=por_enlaces(r"puertovalparaiso\.cl/[^/?#]+$", contenedor=".img-card-item",
+                            excluir=r"\.cl/noticias$"),
+        cuerpo=[".articulo-body-text-inner"], fecha=[".articulo-header"], titulo=["h1", "og"], quitar=[]),
+    "puerto_arica": dict(
+        institucion="Empresa Portuaria Arica",
+        # la paginación es por desplazamiento en la ruta: /novedades, /novedades/10, /novedades/20...
+        secciones=[("https://puertoarica.cl/novedades", 1), ("https://puertoarica.cl/novedades/{n}", 1)],
+        paso=10, listado=por_enlaces(r"puertoarica\.cl/novedad/[^/?]+$"),
+        cuerpo=["article p.clearfix"], fecha=["article h5.text-info"], titulo=["article h2", "og"],
+        quitar=[]),
+    "puerto_chacabuco": dict(
+        institucion="Empresa Portuaria Chacabuco",
+        secciones=[("https://chacabucoport.cl/index.php/noticias/page/{n}/", 1)],
+        listado=por_enlaces(r"chacabucoport\.cl/index\.php/\d{4}/\d{2}/\d{2}/[^/]+/?$",
+                            fecha_url=r"/(?P<a>\d{4})/(?P<m>\d{2})/(?P<d>\d{2})/"),
+        cuerpo=["article .entry-content"], titulo=["h1"], quitar=[]),
+    "puerto_montt": dict(
+        institucion="Empresa Portuaria Puerto Montt",
+        secciones=[("https://www.empormontt.cl/noticias?page={n}", 1)],   # page=0 repite la primera
+        listado=por_enlaces(r"empormontt\.cl/noticias/[^/?]+$", excluir=r"licitacion"),   # avisos de licitación
+        cuerpo=["div.single-excerpt"], fecha=[".entry-header .entry-meta"], titulo=["h1"], quitar=[]),
 }
 
 
@@ -240,17 +407,42 @@ SITIOS = {
 # Nota individual
 # ---------------------------------------------------------------------------
 def cuerpo_de(soup, cfg) -> str:
-    """Texto íntegro: entre los elementos que calzan con los selectores, el de más texto."""
+    """Texto íntegro: entre los elementos que calzan con los selectores, el de más texto.
+    Con densidad=True y sin selector que calce, el bloque con más texto en párrafos."""
     mejor = ""
-    for sel in cfg["cuerpo"]:
+    for sel in cfg.get("cuerpo", []):
         for el in soup.select(sel):
-            for q in cfg["quitar"]:
+            for q in cfg.get("quitar", []):
                 for x in el.select(q):
                     x.decompose()
             t = texto_de(el)
             if len(t) > len(mejor):
                 mejor = t
+    if not mejor and cfg.get("densidad"):
+        mejor = cuerpo_por_densidad(soup)
     return mejor
+
+
+def fecha_de_nota(soup, cfg) -> str:
+    """Fecha en la página de la nota: selectores del sitio (texto o atributo datetime) y metadatos."""
+    for sel in cfg.get("fecha", []):
+        for el in soup.select(sel):
+            f = fecha_iso(el.get("datetime", "")) or fecha_iso(txt(el))
+            if f:
+                return f
+    return fecha_meta(soup)
+
+
+def titulo_de_nota(soup, cfg) -> str:
+    for sel in cfg.get("titulo", []):
+        if sel == "og":
+            m = soup.select_one('meta[property="og:title"]')
+            t = limpiar(m.get("content", "")) if m else ""
+        else:
+            t = txt(soup.select_one(sel))
+        if t:
+            return t
+    return ""
 
 
 def procesar(item, s, cfg, salida, pausa):
@@ -260,7 +452,8 @@ def procesar(item, s, cfg, salida, pausa):
         notas_fallidas.append(url)
         return
     soup = sopa(r)
-    fecha = item["fecha"] or fecha_meta(soup)
+    fecha = item["fecha"] or fecha_de_nota(soup, cfg)
+    titulo = titulo_de_nota(soup, cfg) or item["titulo"]
     bajada = txt(soup.select_one(cfg["resumen"])) if cfg.get("resumen") else ""
     cuerpo = cuerpo_de(soup, cfg)
     if not cuerpo:
@@ -272,7 +465,7 @@ def procesar(item, s, cfg, salida, pausa):
         notas_fallidas.append(url)
         return
     resumen = bajada or item["resumen"] or limpiar(cuerpo)[:300]
-    salida.agregar({"fecha": fecha, "institucion": cfg["institucion"], "titulo": item["titulo"],
+    salida.agregar({"fecha": fecha, "institucion": cfg["institucion"], "titulo": titulo,
                     "resumen": resumen, "url": url, "contenido": cuerpo})
 
 
@@ -292,7 +485,7 @@ def recorrer_seccion(plantilla, primera, cfg, salida, s, a, incremental, tope):
     if re_id:
         ids_vistos = {m.group(1) for u in salida.urls if (m := re_id.search(u))}
     while True:
-        url_lista = plantilla.format(n=n)
+        url_lista = plantilla.format(n=n * cfg.get("paso", 1))   # paso: listados por desplazamiento (?start=)
         r = obtener(s, url_lista, a.pausa)
         if r is None:
             fallos += 1
@@ -308,7 +501,8 @@ def recorrer_seccion(plantilla, primera, cfg, salida, s, a, incremental, tope):
             log.info("Fin del listado en la página %d", n)
             return procesadas, True
         vistas_ant = urls
-        nuevos = [i for i in items if not salida.ya_esta(i["url"])]
+        # una nota que ya falló en esta corrida no se reintenta (p. ej. destacadas repetidas en cada página)
+        nuevos = [i for i in items if not salida.ya_esta(i["url"]) and i["url"] not in notas_fallidas]
         if re_id:
             filtrados = []
             for i in nuevos:
@@ -338,6 +532,22 @@ def recorrer_seccion(plantilla, primera, cfg, salida, s, a, incremental, tope):
         if tope and procesadas >= tope:
             return procesadas, False
         n += 1
+
+
+def secciones_de(cfg, s, pausa):
+    """Las secciones fijas del sitio o, con paginas=<selector>, cada página que enumera el menú
+    de paginación de la primera (listados sin número de página, p. ej. ?foco=<nota>)."""
+    if not cfg.get("paginas"):
+        return cfg["secciones"]
+    primera = cfg["secciones"][0][0]
+    urls = [primera]
+    r = obtener(s, primera, pausa)
+    if r is not None:
+        for el in sopa(r).select(cfg["paginas"]):
+            u = normalizar(primera, el["href"])
+            if u not in urls:
+                urls.append(u)
+    return [(u.replace("{", "{{").replace("}", "}}"), 1) for u in urls]
 
 
 def informar_migracion(ruta, rango):
@@ -370,7 +580,7 @@ def main():
     terminado = True
     try:
         total = 0
-        for i, (plantilla, primera) in enumerate(cfg["secciones"]):
+        for i, (plantilla, primera) in enumerate(secciones_de(cfg, s, a.pausa)):
             if a.seccion is not None and i != a.seccion:
                 continue
             tope = (a.muestra - total) if a.muestra else 0
@@ -381,12 +591,13 @@ def main():
             terminado = terminado and natural
     finally:
         filas = salida.cerrar()
-    if notas_fallidas:
-        log.warning("Notas que no se pudieron bajar: %d (se reintentan en la próxima corrida)", len(notas_fallidas))
+    fallidas = len(set(notas_fallidas))
+    if fallidas:
+        log.warning("Notas que no se pudieron bajar: %d (se reintentan en la próxima corrida)", fallidas)
     if "migracion" in cfg:
         informar_migracion(ruta, cfg["migracion"])
     if not a.muestra and a.pagina_inicial is None and a.seccion is None and terminado \
-            and len(notas_fallidas) <= max(2, salida.nuevas // 200):
+            and fallidas <= max(2, salida.nuevas // 200):
         marcador.write_text("recorrido completo\n", encoding="utf-8")
     log.info("Listo: %d notas nuevas, %d en total", salida.nuevas, filas)
 

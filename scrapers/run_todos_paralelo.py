@@ -80,11 +80,13 @@ FAMILIAS = {
         "gore_tarapaca", "gore_atacama", "gore_rm", "gore_biobio", "gore_losrios", "gore_magallanes",
         "gore_maule", "gore_nuble",
         "emco", "efe", "casamoneda", "asmar", "enaer", "famae",
-        "utem", "umce", "upla", "uta", "uda", "ufro", "ulagos", "uaysen", "uoh", "ubiobio"],
+        "utem", "umce", "upla", "uta", "uda", "ufro", "ulagos", "uaysen", "uoh", "ubiobio",
+        "ifop", "chilevalora", "parquemet", "cochilco"],
     "scrapers/scraper_sitemap.py": [
         "culturas", "economia", "segegob", "minmineria", "minvu", "bienes_nacionales", "sernapesca",
         "conaf", "cde", "cenabast", "supereduc", "isp", "senapred", "odepa", "senda", "migraciones",
-        "uantof", "umag"],
+        "uantof", "umag", "segpres", "anci", "coordinador_electrico", "convencion",
+        "puerto_antofagasta"],
     "scrapers/scraper_wp_html.py": ["minjusticia", "sml", "defensoria_ninez", "minsal", "minciencia"],
     "scrapers/scraper_universidades.py": ["uchile", "usach", "uv", "unap", "userena", "utalca"],
     "scrapers/scraper_defensa_empresas.py": [
@@ -93,7 +95,10 @@ FAMILIAS = {
         "gore_arica", "gore_antofagasta", "gore_coquimbo", "gore_valparaiso", "gore_ohiggins",
         "gore_araucania", "gore_aysen"],
     "scrapers/scraper_listados_institucionales.py": [
-        "fiscalia", "sea", "patrimonio", "injuv", "sence", "fosis", "senama", "conadi", "senadis"],
+        "fiscalia", "sea", "patrimonio", "injuv", "sence", "fosis", "senama", "conadi", "senadis",
+        "gobierno_digital", "laboratorio_gobierno", "cnep", "subsecretaria_defensa", "subsecretaria_ffaa",
+        "cfa", "sbap", "capredena", "inn", "ciren", "infor", "inapi", "uaf", "agcid", "auditoria_interna",
+        "econssa", "puerto_valparaiso", "puerto_arica", "puerto_chacabuco", "puerto_montt"],
     "scrapers/scraper_listados_web.py": [
         "dt", "sernac", "suseso", "spensiones", "subpesca", "servicio_proteccion", "dipres", "cmf",
         "superdesalud"],

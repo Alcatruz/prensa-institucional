@@ -147,6 +147,31 @@ SITIOS = {
     "migraciones": dict(
         institucion="Servicio Nacional de Migraciones",
         sitemaps=["https://serviciomigraciones.cl/post-sitemap.xml"], cuerpo=ELEMENTOR),
+    "segpres": dict(
+        institucion="Ministerio Secretaría General de la Presidencia",
+        # las notas son un tipo propio (/archivo/noticias/); og:title es el nombre del sitio
+        indice="https://www.minsegpres.gob.cl/sitemap_index.xml", patron=r"/noticias-sitemap\d*\.xml",
+        filtro_url=r"/archivo/noticias/[^/]+/?$", cuerpo=["section.news-in div.content"],
+        fecha=["section.news-in div.date"], titulo=["h1"]),
+    "anci": dict(
+        institucion="Agencia Nacional de Ciberseguridad",   # incluye al CSIRT de Gobierno
+        sitemaps=["https://anci.gob.cl/sitemap.xml"], filtro_url=r"/noticias/[^/]+/?$",
+        cuerpo=["main div.content-body"], fecha=["main time"], titulo=["h1", "og"]),
+    "coordinador_electrico": dict(
+        institucion="Coordinador Eléctrico Nacional",
+        indice="https://www.coordinador.cl/sitemap.xml", patron=r"/novedades-sitemap\d*\.xml",
+        filtro_url=r"/novedades/[^/]+/?$", cuerpo=[".news-main-text"], fecha=[".news-full-date"],
+        titulo=["h1", "og"]),
+    "convencion": dict(
+        institucion="Convención Constitucional",
+        sitemaps=["https://www.chileconvencion.cl/news_cconstitucional-sitemap.xml"],
+        filtro_url=r"/news_cconstitucional/[^/]+/?$", cuerpo=["div.news-main div.content"],
+        fecha=["div.news-main div.date"], titulo=["h1"]),
+    "puerto_antofagasta": dict(
+        institucion="Empresa Portuaria Antofagasta",
+        # el sitemap repite cada nota en portugués e inglés: solo la versión en español
+        sitemaps=["https://www.puertoantofagasta.cl/sitemap.xml"], filtro_url=r"/es/noticias/[^/]+$",
+        cuerpo=[".rich-text-content"], titulo=["h1", "og"]),
 }
 
 # Sujetos obligados del catálogo (auditoria_salas_prensa.py --catalogo) que son WordPress

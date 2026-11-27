@@ -116,6 +116,15 @@ SITIOS = {
                 institucion="Universidad de O'Higgins"),
     "ubiobio": dict(base="https://noticias.ubiobio.cl",   # portal de noticias aparte del sitio Liferay
                     institucion="Universidad del Bío-Bío"),
+    # servicios públicos
+    "ifop": dict(base="https://www.ifop.cl", categorias=[4],   # noticias (sin talleres ni podcast)
+                 institucion="Instituto de Fomento Pesquero"),
+    "chilevalora": dict(base="https://chilevalora.gob.cl", tipo="noticias",
+                        institucion="Comisión del Sistema Nacional de Certificación de Competencias Laborales"),
+    "parquemet": dict(base="https://parquemet.gob.cl", tipo="noticias",
+                      institucion="Parque Metropolitano de Santiago"),
+    "cochilco": dict(base="https://www.cochilco.cl/web", categorias=[95],   # noticias (incluye avisos de informes)
+                     institucion="Comisión Chilena del Cobre"),
 }
 
 # Sujetos obligados por la Ley de Transparencia del catálogo (auditoria_salas_prensa.py
