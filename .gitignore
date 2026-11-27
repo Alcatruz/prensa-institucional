@@ -16,6 +16,7 @@
 /analisis/*
 !/analisis/topicos_ministerios.py
 !/analisis/stopwords_es.txt
+!/analisis/explorador_topicos.html
 
 !/scrapers/
 /scrapers/*

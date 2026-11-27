@@ -1,0 +1,773 @@
+<title>Tópicos de la prensa ministerial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Explorador: una columna de 1180 px; mapa y ficha lado a lado, luego listas y perfiles apilados.
+   Azul y rojo institucionales; el azul es también la escala secuencial y un polo de la divergente. */
+:root {
+  --bg: #f3f5f7;
+  --surface: #ffffff;
+  --ink: #0f1b27;
+  --ink-2: #465564;
+  --muted: #727e8a;
+  --line: #dbe1e7;
+  --grid: #e8ecf0;
+  --axis: #bfc8d1;
+  --band: #f0f3f6;
+  --accent: #1660b8;
+  --accent-ink: #0f4f9a;
+  --accent-soft: #e4eefa;
+  --sel: #0f1b27;
+  --cae-2: #c8423f;
+  --cae-1: #f0a49c;
+  --neutro: #bcc3ca;
+  --crece-1: #8dbaf0;
+  --crece-2: #1c5cab;
+  --s1: #cde2fb; --s2: #9ec5f4; --s3: #6da7ec; --s4: #3987e5; --s5: #256abf; --s6: #184f95; --s7: #0d366b;
+  --vacio: #eef1f4;
+  --sombra: 0 6px 24px rgba(15, 27, 39, 0.12);
+  --f-texto: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-cond: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1216; --surface: #161b21; --ink: #e8edf2; --ink-2: #b3bdc7; --muted: #8995a1;
+    --line: #29323b; --grid: #20272e; --axis: #3b4550; --band: #1a2027;
+    --accent: #5c9ee9; --accent-ink: #8dbaf0; --accent-soft: #1a2a3d; --sel: #ffffff;
+    --cae-2: #ec706b; --cae-1: #8c3f3b; --neutro: #4b545d; --crece-1: #2c5a92; --crece-2: #79aef0;
+    --s1: #16314f; --s2: #1b446f; --s3: #215a95; --s4: #2f74c8; --s5: #5598e7; --s6: #86b6ef; --s7: #cde2fb;
+    --vacio: #1c232a; --sombra: 0 6px 24px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1216; --surface: #161b21; --ink: #e8edf2; --ink-2: #b3bdc7; --muted: #8995a1;
+  --line: #29323b; --grid: #20272e; --axis: #3b4550; --band: #1a2027;
+  --accent: #5c9ee9; --accent-ink: #8dbaf0; --accent-soft: #1a2a3d; --sel: #ffffff;
+  --cae-2: #ec706b; --cae-1: #8c3f3b; --neutro: #4b545d; --crece-1: #2c5a92; --crece-2: #79aef0;
+  --s1: #16314f; --s2: #1b446f; --s3: #215a95; --s4: #2f74c8; --s5: #5598e7; --s6: #86b6ef; --s7: #cde2fb;
+  --vacio: #1c232a; --sombra: 0 6px 24px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-texto); font-size: 15px; line-height: 1.5; }
+.pagina {
+  max-width: 1180px; margin: 0 auto;
+  padding-block: 32px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px;
+}
+h1, h2, h3, h4 { margin: 0; font-weight: 600; text-wrap: balance; line-height: 1.2; }
+h1 { font-size: clamp(1.75rem, 4vw, 2.4rem); letter-spacing: -0.01em; }
+h2 { font-size: 1.4rem; }
+h3 { font-size: 1.15rem; }
+h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 500; }
+p { margin: 0; }
+a { color: var(--accent-ink); }
+a:hover { text-decoration-thickness: 2px; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+
+.sobre { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 500; }
+
+/* cabecera */
+.cabecera { display: grid; gap: 14px; }
+.bajada { max-width: 68ch; color: var(--ink-2); font-size: 1.02rem; }
+.cifras { display: flex; flex-wrap: wrap; gap: 10px 32px; margin: 8px 0 0; padding: 0; }
+.cifras div { display: grid; gap: 0; }
+.cifras dt { font-size: 0.78rem; color: var(--muted); }
+.cifras dd { margin: 0; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; }
+
+/* secciones */
+.bloque { display: grid; gap: 16px; min-width: 0; }
+.bloque > header { display: grid; gap: 6px; }
+.bloque > header p { max-width: 74ch; color: var(--ink-2); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; min-width: 0; }
+
+/* controles */
+.controles { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: end; }
+.campo { display: grid; gap: 4px; font-size: 0.8rem; color: var(--muted); }
+.campo input, .campo select {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  padding: 7px 10px; font-size: 0.92rem; color: var(--ink); min-width: 0;
+}
+.campo input { width: min(260px, 80vw); }
+.campo select { max-width: 80vw; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; padding: 6px 12px; font-size: 0.85rem; cursor: pointer; color: var(--ink-2); }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent-ink); font-weight: 500; }
+.seg button:hover { color: var(--ink); }
+.conteo { font-size: 0.85rem; color: var(--muted); }
+
+/* explorador */
+.explorador { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 920px) { .explorador { grid-template-columns: minmax(0, 1fr); } }
+.mapa-panel { display: grid; gap: 10px; }
+@media (min-width: 921px) { .mapa-panel { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); } }
+#mapa { width: 100%; height: auto; display: block; touch-action: manipulation; }
+.burbuja { fill: var(--c); stroke: var(--surface); stroke-width: 1; }
+.burbuja.autoridad { fill: var(--surface); stroke: var(--c); stroke-width: 2; }
+.burbuja.apagada { opacity: 0.1; }
+@media (prefers-reduced-motion: no-preference) { .burbuja { transition: opacity .2s, r .25s; } }
+.anillo { fill: none; stroke: var(--sel); stroke-width: 2; }
+.rotulo { font-size: 12px; font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; pointer-events: none; }
+.rotulo.menor { font-size: 11px; font-weight: 400; fill: var(--ink-2); }
+.t-cae2 { --c: var(--cae-2); } .t-cae1 { --c: var(--cae-1); } .t-neutro { --c: var(--neutro); }
+.t-crece1 { --c: var(--crece-1); } .t-crece2 { --c: var(--crece-2); }
+.leyenda { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.8rem; color: var(--ink-2); align-items: center; }
+.leyenda span { display: inline-flex; align-items: center; gap: 6px; }
+.punto { width: 10px; height: 10px; border-radius: 50%; background: var(--c); display: inline-block; flex: none; }
+.punto.hueco { background: transparent; border: 2px solid var(--muted); }
+.nota-graf { font-size: 0.8rem; color: var(--muted); }
+
+/* ficha */
+.ficha { display: grid; gap: 14px; }
+.ficha h3 { font-size: 1.25rem; }
+.chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.chips li { font-size: 0.8rem; padding: 2px 8px; border-radius: 999px; background: var(--band); color: var(--ink-2); border: 1px solid var(--line); }
+.hechos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 0; }
+.hechos div { display: grid; gap: 2px; min-width: 0; }
+.hechos dt { font-size: 0.78rem; color: var(--muted); }
+.hechos dd { margin: 0; font-weight: 500; }
+.tend { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--ink-2); font-weight: 400; white-space: nowrap; }
+.sub { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.notas { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.notas li { display: grid; gap: 1px; min-width: 0; }
+.notas a { font-weight: 500; text-decoration: none; overflow-wrap: anywhere; }
+.notas a:hover { text-decoration: underline; }
+.notas .meta { font-size: 0.8rem; color: var(--muted); }
+.insignia { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; vertical-align: 1px; }
+
+/* gráficos SVG */
+.graf { width: 100%; height: auto; display: block; overflow: visible; }
+.graf .banda { fill: var(--band); }
+.graf .gob { font-size: 10px; fill: var(--muted); }
+.graf .rejilla { stroke: var(--grid); stroke-width: 1; }
+.graf .base { stroke: var(--axis); stroke-width: 1; }
+.graf .tick { font-size: 10px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.graf .trazo { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.graf .pto { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+.graf .guia { stroke: var(--axis); stroke-width: 1; }
+.graf .foco { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+.graf .evento { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 3; }
+.graf .marca { fill: var(--surface); stroke: var(--muted); stroke-width: 1; }
+.graf .marca-t { font-size: 9.5px; fill: var(--ink-2); font-weight: 600; }
+.graf .col { fill: var(--accent); }
+
+/* barras HTML */
+.barras { display: grid; gap: 6px; }
+.barra { display: grid; grid-template-columns: minmax(0, 1fr) minmax(60px, 1.1fr) auto; gap: 10px; align-items: center; font-size: 0.86rem; text-align: left;
+  border: 0; background: transparent; padding: 3px 4px; border-radius: 6px; width: 100%; }
+button.barra { cursor: pointer; }
+button.barra:hover { background: var(--band); }
+button.barra[aria-current="true"] { background: var(--accent-soft); }
+.barra .et { min-width: 0; overflow-wrap: anywhere; }
+.barra .pista { height: 10px; position: relative; }
+.barra .relleno { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 0 4px 4px 0; min-width: 2px; }
+.barra .val { color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 0.82rem; }
+
+/* lista con mapa de calor */
+.calor-cont { overflow-x: auto; }
+.calor { min-width: 720px; display: grid; gap: 2px; }
+.calor .fila {
+  display: grid; grid-template-columns: minmax(220px, 1fr) repeat(var(--n), 22px) 170px 56px; gap: 2px 2px;
+  align-items: center; border: 0; background: transparent; padding: 2px 4px; border-radius: 6px; text-align: left; width: 100%;
+}
+.calor button.fila { cursor: pointer; }
+.calor button.fila:hover { background: var(--band); }
+.calor button.fila[aria-current="true"] { background: var(--accent-soft); }
+.calor .cab { font-size: 0.72rem; color: var(--muted); }
+.calor .cab span:not(:first-child) { text-align: center; }
+.calor .et { font-size: 0.88rem; padding-right: 10px; min-width: 0; overflow-wrap: anywhere; }
+.calor .celda { height: 18px; border-radius: 2px; background: var(--vacio); }
+.calor .min { font-family: var(--f-cond); font-size: 0.8rem; color: var(--ink-2); padding-left: 10px; min-width: 0; overflow-wrap: anywhere; }
+.calor .n { font-size: 0.8rem; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.s1 { background: var(--s1) !important; } .s2 { background: var(--s2) !important; } .s3 { background: var(--s3) !important; }
+.s4 { background: var(--s4) !important; } .s5 { background: var(--s5) !important; } .s6 { background: var(--s6) !important; }
+.s7 { background: var(--s7) !important; }
+.escala { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; font-size: 0.78rem; color: var(--ink-2); }
+.escala i { width: 14px; height: 12px; border-radius: 2px; display: inline-block; vertical-align: -1px; margin-right: 4px; }
+
+/* ministerios */
+.dos { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px; align-items: start; }
+@media (max-width: 920px) { .dos { grid-template-columns: minmax(0, 1fr); } }
+.perfil { display: grid; gap: 14px; }
+.perfil .resumen { color: var(--ink-2); }
+.boton { justify-self: start; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 0.86rem; color: var(--accent-ink); }
+.boton:hover { background: var(--accent-soft); }
+.eventos { margin: 0; padding-left: 1.4em; font-size: 0.84rem; color: var(--ink-2); display: grid; gap: 2px; }
+
+/* método */
+.metodo { display: grid; gap: 10px; max-width: 80ch; color: var(--ink-2); }
+.metodo ul { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; }
+.metodo strong { color: var(--ink); font-weight: 500; }
+.pie { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+
+/* tooltip */
+.tip { position: fixed; z-index: 20; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+  box-shadow: var(--sombra); border-radius: 8px; padding: 8px 10px; font-size: 0.82rem; max-width: 300px; display: grid; gap: 2px; }
+.tip strong { font-weight: 600; }
+.tip span { color: var(--ink-2); }
+.estado { padding: 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+</style>
+
+<main class="pagina">
+  <header class="cabecera">
+    <p class="sobre">Prensa institucional · Ministerios de Chile · 2014–2026</p>
+    <h1>Tópicos de la prensa ministerial</h1>
+    <p class="bajada">Un modelo de tópicos agrupa por contenido todas las notas de prensa de los ministerios y sus subsecretarías, sin buscar ningún tema de antemano. Aquí se puede ver qué tópicos existen, cuándo crecen o se apagan, cómo comunica cada ministerio y dónde aparece la inteligencia artificial.</p>
+    <dl class="cifras">
+      <div><dt>Notas</dt><dd class="num" id="c-notas">—</dd></div>
+      <div><dt>Ministerios</dt><dd class="num" id="c-min">—</dd></div>
+      <div><dt>Tópicos</dt><dd class="num" id="c-top">—</dd></div>
+      <div><dt>Notas sin tópico</dt><dd class="num" id="c-sin">—</dd></div>
+    </dl>
+  </header>
+
+  <p class="estado" id="estado" hidden></p>
+
+  <section class="bloque" id="explorar" aria-labelledby="t-explorar">
+    <header>
+      <h2 id="t-explorar">Mapa de tópicos</h2>
+      <p>Cada círculo es un tópico; los que están cerca tratan temas parecidos. El tamaño indica cuántas notas tiene y el color, cuánto cambió su peso entre 2018–2022 y 2023–2026. Haz clic en un tópico para ver su ficha.</p>
+    </header>
+    <div class="controles">
+      <label class="campo" for="buscar">Buscar palabra clave
+        <input id="buscar" type="search" placeholder="p. ej. litio, vacunación, datos" autocomplete="off">
+      </label>
+      <label class="campo" for="f-min">Ministerio
+        <select id="f-min"><option value="">Todos los ministerios</option></select>
+      </label>
+      <div class="campo">Tipo de tópico
+        <div class="seg" role="group" aria-label="Tipo de tópico" id="f-tipo">
+          <button type="button" data-tipo="todos" aria-pressed="true">Todos</button>
+          <button type="button" data-tipo="tema" aria-pressed="false">Temas</button>
+          <button type="button" data-tipo="autoridad" aria-pressed="false">Agenda de autoridad</button>
+        </div>
+      </div>
+      <p class="conteo" id="conteo" aria-live="polite"></p>
+    </div>
+    <div class="explorador">
+      <div class="panel mapa-panel">
+        <svg id="mapa" role="img" aria-label="Mapa de tópicos: cada círculo es un tópico, ubicado según su parecido con los demás"></svg>
+        <div class="leyenda" id="leyenda-mapa"></div>
+        <p class="nota-graf" id="nota-mapa">El tamaño es proporcional a la raíz del número de notas. Con un ministerio elegido, el tamaño cuenta solo sus notas.</p>
+      </div>
+      <article class="panel ficha" id="ficha" aria-live="polite"></article>
+    </div>
+  </section>
+
+  <section class="bloque" id="tiempo" aria-labelledby="t-tiempo">
+    <header>
+      <h2 id="t-tiempo">Qué aparece y qué desaparece</h2>
+      <p>Peso de cada tópico año a año, en notas por cada mil notas ministeriales del año. Las listas comparan 2023–2026 con 2018–2022 y dejan fuera los tópicos centrados en una autoridad. Haz clic en una fila para abrir su ficha.</p>
+    </header>
+    <div class="controles">
+      <div class="seg" role="group" aria-label="Lista de tópicos" id="f-lista">
+        <button type="button" data-lista="crecen" aria-pressed="true">Los que más crecen</button>
+        <button type="button" data-lista="caen" aria-pressed="false">Los que más caen</button>
+        <button type="button" data-lista="ia" aria-pressed="false">IA y transformación digital</button>
+        <button type="button" data-lista="todos" aria-pressed="false">Todos los tópicos</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="calor-cont"><div class="calor" id="calor"></div></div>
+      <div class="escala" id="escala" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <section class="bloque" id="ministerios" aria-labelledby="t-min">
+    <header>
+      <h2 id="t-min">Cómo comunica cada ministerio</h2>
+      <p>Algunos ministerios organizan su prensa en torno a la agenda de su autoridad (reuniones, visitas, viajes); otros, en torno a programas y políticas. La barra muestra la parte de sus notas que cae en tópicos encabezados por el apellido de un ministro, ministra o subsecretario. Elige un ministerio para ver su perfil.</p>
+    </header>
+    <div class="dos">
+      <div class="panel">
+        <h4 style="margin-bottom:10px">Notas en tópicos de agenda de autoridad, 2014–2026</h4>
+        <div class="barras" id="barras-min"></div>
+      </div>
+      <article class="panel perfil" id="perfil" aria-live="polite"></article>
+    </div>
+  </section>
+
+  <section class="bloque" id="ia" aria-labelledby="t-ia">
+    <header>
+      <h2 id="t-ia">Dónde aparece la inteligencia artificial</h2>
+      <p>Notas ministeriales que nombran la IA (inteligencia artificial, la sigla IA, machine learning, ChatGPT, chatbots o modelos de lenguaje). Solo una parte cae en el tópico propio de IA; el resto la menciona dentro de otras agendas.</p>
+    </header>
+    <div class="dos">
+      <div class="panel" style="display:grid;gap:10px">
+        <h4>Notas que nombran la IA, por cada mil notas del año</h4>
+        <div id="ia-linea"></div>
+        <ol class="eventos" id="ia-eventos"></ol>
+      </div>
+      <div class="panel" style="display:grid;gap:18px">
+        <div style="display:grid;gap:10px">
+          <h4>En qué tópicos caen esas notas</h4>
+          <div class="barras" id="ia-topicos"></div>
+        </div>
+        <div style="display:grid;gap:10px">
+          <h4>Qué ministerios las publican</h4>
+          <div class="barras" id="ia-min"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloque" id="metodo" aria-labelledby="t-metodo">
+    <header><h2 id="t-metodo">Cómo se hizo</h2></header>
+    <div class="metodo" id="metodo-texto"></div>
+    <p class="pie">Código del análisis: <a href="https://github.com/Alcatruz/prensa-institucional" target="_blank" rel="noopener">github.com/Alcatruz/prensa-institucional</a> (los datos no se publican en el repositorio).</p>
+  </section>
+</main>
+
+<div class="tip" id="tip" role="tooltip" hidden></div>
+
+<script id="datos" type="application/json"></script>
+<script>
+(function () {
+  "use strict";
+  const $ = (s, r) => (r || document).querySelector(s);
+  const NS = "http://www.w3.org/2000/svg";
+  function S(tag, attrs, padre) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs || {}) e.setAttribute(k, attrs[k]);
+    if (padre) padre.appendChild(e);
+    return e;
+  }
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const nf0 = new Intl.NumberFormat("es-CL", { maximumFractionDigits: 0, useGrouping: "always" });
+  const nf1 = new Intl.NumberFormat("es-CL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const nfc = new Intl.NumberFormat("es-CL", { maximumFractionDigits: 2 });
+  const n0 = v => nf0.format(v), n1 = v => nf1.format(v), pct = v => nf0.format(v) + " %";
+  const norm = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const MESES = ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sept.", "oct.", "nov.", "dic."];
+  const fecha = f => { const [a, m, d] = f.split("-"); return `${+d} ${MESES[+m - 1]} ${a}`; };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  // gobiernos (11 de marzo de cada cambio); un año se dibuja centrado en su número
+  const GOB = [
+    { nombre: "Bachelet", desde: -Infinity, hasta: 2018 },
+    { nombre: "Piñera", desde: 2018, hasta: 2022 },
+    { nombre: "Boric", desde: 2022, hasta: 2026 },
+    { nombre: "Kast", desde: 2026, hasta: Infinity },
+  ];
+  const marzo = a => a - 0.5 + 70 / 365;
+  const EVENTOS = [
+    { x: 2019 - 0.5 + 10.4 / 12, t: "Ley 21.180 de Transformación Digital del Estado (nov. 2019)" },
+    { x: 2021 - 0.5 + 9.9 / 12, t: "Política Nacional de Inteligencia Artificial (oct. 2021)" },
+    { x: 2022 - 0.5 + 10.97 / 12, t: "Lanzamiento de ChatGPT (nov. 2022)" },
+    { x: 2024 - 0.5 + 4.2 / 12, t: "Política de IA actualizada y proyecto de ley de IA (may. 2024)" },
+  ];
+  const TEND = ["cae a menos de la mitad", "cae", "estable", "crece", "se duplica o más"];
+  const TCLS = ["t-cae2", "t-cae1", "t-neutro", "t-crece1", "t-crece2"];
+  const CORTES = [0.25, 1, 2, 4, 8, 16, 32];
+
+  const tip = $("#tip");
+  function mostrarTip(html, e) {
+    tip.innerHTML = html;
+    tip.hidden = false;
+    const r = tip.getBoundingClientRect(), m = 12;
+    let x = e.clientX + 14, y = e.clientY + 14;
+    if (x + r.width > innerWidth - m) x = e.clientX - r.width - 14;
+    if (y + r.height > innerHeight - m) y = e.clientY - r.height - 14;
+    tip.style.left = Math.max(m, x) + "px";
+    tip.style.top = Math.max(m, y) + "px";
+  }
+  const ocultarTip = () => { tip.hidden = true; };
+  function puntoSVG(svg, e) {
+    const p = svg.createSVGPoint();
+    p.x = e.clientX; p.y = e.clientY;
+    return p.matrixTransform(svg.getScreenCTM().inverse());
+  }
+  function ticks(max) {
+    const bruto = max / 4, p = Math.pow(10, Math.floor(Math.log10(bruto)));
+    const paso = [1, 2, 2.5, 5, 10].find(m => m * p >= bruto) * p;
+    const n = Math.max(1, Math.ceil(max / paso - 1e-9));
+    return Array.from({ length: n + 1 }, (_, i) => +(i * paso).toFixed(6));
+  }
+
+  async function cargar() {
+    const nodo = document.getElementById("datos");
+    if (nodo && nodo.textContent.trim()) return JSON.parse(nodo.textContent);
+    const r = await fetch("datos.json");
+    if (!r.ok) throw new Error("respuesta " + r.status);
+    return r.json();
+  }
+
+  cargar().then(iniciar).catch(err => {
+    const e = $("#estado");
+    e.hidden = false;
+    e.textContent = "No se pudieron cargar los datos del explorador (" + err.message + "). Vuelve a generar la página con la etapa «explorador» del script.";
+  });
+
+  function iniciar(D) {
+    const A = D.anios, NA = A.length;
+    const T = new Map(D.topicos.map(t => [t.id, t]));
+    const MIN = D.ministerios.map(m => m.nombre);
+    const ORG = D.organismos;
+    D.topicos.forEach(t => { t._txt = norm(t.palabras.join(" | ")); });
+    const etiq = (t, n) => t.palabras.slice(0, n || 4).join(" · ");
+    const minPrincipal = t => MIN[t.ministerios[0][0]];
+    const tend = t => { const v = Math.log2(t.razon); return v >= 1 ? 4 : v >= 0.4 ? 3 : v > -0.4 ? 2 : v > -1 ? 1 : 0; };
+    const conteo = (serie, i) => Math.round(serie[i] * D.notas_por_anio[i] / 1000);
+    const RE_DIGITAL = /^(?:digital|transformación digital|gobierno digital|salud digital|servicios digitales|ciberseguridad|datos personales|inteligencia artificial)$|algoritm|automatizaci/;
+    const esIA = t => t.ia / t.notas >= 0.2 || t.palabras.slice(0, 3).some(p => RE_DIGITAL.test(p));
+    const badge = t => t.tipo === "autoridad" ? ' <span class="insignia">autoridad</span>' : "";
+
+    const candidatosIA = D.topicos.filter(t => t.notas >= 50).sort((a, b) => b.ia / b.notas - a.ia / a.notas);
+    const estado = {
+      sel: candidatosIA[0].id, min: "", tipo: "todos", q: "", vista: "cruda", notas: "representativas",
+      lista: "crecen", minSel: null,
+    };
+    const h = /^#t(\d+)$/.exec(location.hash);
+    if (h && T.has(+h[1])) estado.sel = +h[1];
+
+    // cifras de cabecera
+    $("#c-notas").textContent = n0(D.notas_total);
+    $("#c-min").textContent = n0(MIN.length);
+    $("#c-top").textContent = n0(D.topicos.length);
+    $("#c-sin").textContent = pct(D.sin_topico);
+
+    /* ---------------- gráfico de línea genérico ---------------- */
+    function grafLinea(cont, op) {
+      const W = 560, H = op.alto || 220, ml = 38, mr = 12, mt = 24, mb = 24;
+      const svg = S("svg", { viewBox: `0 0 ${W} ${H}`, class: "graf", role: "img", "aria-label": op.etiqueta || "" });
+      cont.replaceChildren(svg);
+      const x0 = A[0] - 0.5, x1 = A[NA - 1] + 0.5;
+      const X = a => ml + (a - x0) / (x1 - x0) * (W - ml - mr);
+      const validos = op.vals.filter(v => v != null);
+      const tk = ticks(Math.max(...validos, 0.01)), ymax = tk[tk.length - 1];
+      const Y = v => mt + (1 - v / ymax) * (H - mt - mb);
+      GOB.forEach((g, i) => {
+        const a = Math.max(g.desde === -Infinity ? x0 : marzo(g.desde), x0);
+        const b = Math.min(g.hasta === Infinity ? x1 : marzo(g.hasta), x1);
+        if (b <= a) return;
+        if (i % 2 === 1) S("rect", { x: X(a), y: mt, width: X(b) - X(a), height: H - mt - mb, class: "banda" }, svg);
+        if (X(b) - X(a) > 26) S("text", { x: X(a) + 4, y: mt - 8, class: "gob" }, svg).textContent = g.nombre;
+      });
+      tk.forEach(v => {
+        S("line", { x1: ml, x2: W - mr, y1: Y(v), y2: Y(v), class: v === 0 ? "base" : "rejilla" }, svg);
+        S("text", { x: ml - 6, y: Y(v) + 3.5, class: "tick", "text-anchor": "end" }, svg).textContent = nfc.format(v);
+      });
+      A.forEach((a, i) => {
+        if (i % 2 === 0 || i === NA - 1)
+          S("text", { x: X(a), y: H - 6, class: "tick", "text-anchor": "middle" }, svg).textContent = i === 0 || i === NA - 1 ? a : "’" + String(a).slice(2);
+      });
+      (op.eventos || []).forEach((ev, k) => {
+        S("line", { x1: X(ev.x), x2: X(ev.x), y1: mt + 9, y2: H - mb, class: "evento" }, svg);
+        S("circle", { cx: X(ev.x), cy: mt + 1, r: 7, class: "marca" }, svg);
+        S("text", { x: X(ev.x), y: mt + 4.5, class: "marca-t", "text-anchor": "middle" }, svg).textContent = k + 1;
+      });
+      let d = "", abierto = false;
+      op.vals.forEach((v, i) => {
+        if (v == null) { abierto = false; return; }
+        d += (abierto ? "L" : "M") + X(A[i]).toFixed(1) + "," + Y(v).toFixed(1);
+        abierto = true;
+      });
+      S("path", { d, class: "trazo" }, svg);
+      op.vals.forEach((v, i) => { if (v != null) S("circle", { cx: X(A[i]), cy: Y(v), r: 3.5, class: "pto" }, svg); });
+      const guia = S("line", { y1: mt, y2: H - mb, class: "guia", visibility: "hidden" }, svg);
+      const foco = S("circle", { r: 5, class: "foco", visibility: "hidden" }, svg);
+      const capa = S("rect", { x: ml, y: 0, width: W - ml - mr, height: H, fill: "transparent" }, svg);
+      capa.addEventListener("pointermove", e => {
+        const p = puntoSVG(svg, e);
+        const i = clamp(Math.round(x0 + (p.x - ml) / (W - ml - mr) * (x1 - x0)) - A[0], 0, NA - 1);
+        const v = op.vals[i];
+        guia.setAttribute("x1", X(A[i])); guia.setAttribute("x2", X(A[i]));
+        guia.setAttribute("visibility", "visible");
+        if (v != null) {
+          foco.setAttribute("cx", X(A[i])); foco.setAttribute("cy", Y(v));
+          foco.setAttribute("visibility", "visible");
+        }
+        mostrarTip(op.tip(i), e);
+      });
+      capa.addEventListener("pointerleave", () => {
+        guia.setAttribute("visibility", "hidden"); foco.setAttribute("visibility", "hidden"); ocultarTip();
+      });
+    }
+
+    /* ---------------- barras HTML ---------------- */
+    function barras(cont, filas, op) {
+      const max = Math.max(...filas.map(f => f.v), 1e-9);
+      cont.innerHTML = filas.map(f => {
+        const tag = f.id != null ? "button" : "div";
+        const attrs = f.id != null ? ` type="button" data-id="${f.id}"${f.actual ? ' aria-current="true"' : ""}` : "";
+        return `<${tag} class="barra"${attrs}><span class="et">${f.et}</span>` +
+          `<span class="pista"><span class="relleno" style="width:${(100 * f.v / max).toFixed(1)}%"></span></span>` +
+          `<span class="val">${f.txt}</span></${tag}>`;
+      }).join("");
+      if (op && op.clic) cont.querySelectorAll("button.barra").forEach(b => b.addEventListener("click", () => op.clic(+b.dataset.id)));
+    }
+
+    /* ---------------- mapa ---------------- */
+    const MW = 640, MH = 540, MP = 30;
+    const svgM = $("#mapa");
+    svgM.setAttribute("viewBox", `0 0 ${MW} ${MH}`);
+    const gB = S("g", {}, svgM), gL = S("g", {}, svgM);
+    const px = t => MP + t.x * (MW - 2 * MP), py = t => MP + (1 - t.y) * (MH - 2 * MP);
+    const nodos = new Map();
+    [...D.topicos].sort((a, b) => b.notas - a.notas).forEach(t => {
+      nodos.set(t.id, S("circle", {
+        cx: px(t).toFixed(1), cy: py(t).toFixed(1),
+        class: "burbuja " + TCLS[tend(t)] + (t.tipo === "autoridad" ? " autoridad" : ""),
+      }, gB));
+    });
+    let radio = () => 0;
+    const visible = t => (estado.tipo === "todos" || t.tipo === estado.tipo) && (!estado.q || t._txt.includes(estado.q)) && radio(t) > 0;
+
+    function dibujarMapa() {
+      const mi = estado.min === "" ? null : +estado.min;
+      const val = t => mi === null ? t.notas : ((t.ministerios.find(m => m[0] === mi) || [0, 0])[1]);
+      const max = Math.max(...D.topicos.map(val), 1);
+      radio = t => { const v = val(t); return v ? 2.5 + 17 * Math.sqrt(v / max) : 0; };
+      let n = 0;
+      const coinciden = [];
+      for (const t of D.topicos) {
+        const c = nodos.get(t.id), r = radio(t), vis = visible(t);
+        c.setAttribute("r", Math.max(r, 2.5).toFixed(1));
+        c.classList.toggle("apagada", !vis);
+        if (vis) { n++; coinciden.push(t); }
+      }
+      const filtrado = estado.q || estado.min !== "" || estado.tipo !== "todos";
+      $("#conteo").textContent = filtrado ? `${n0(n)} de ${n0(D.topicos.length)} tópicos` : "";
+      gL.replaceChildren();
+      const rotular = (t, cls) => {
+        const x = px(t), y = py(t), r = Math.max(radio(t), 2.5), der = x > MW * 0.66;
+        S("text", { x: der ? x - r - 5 : x + r + 5, y: y + 4, class: cls, "text-anchor": der ? "end" : "start" }, gL)
+          .textContent = etiq(t, 3);
+      };
+      if (estado.q && coinciden.length <= 10) coinciden.forEach(t => { if (t.id !== estado.sel) rotular(t, "rotulo menor"); });
+      const s = T.get(estado.sel);
+      if (s) {
+        S("circle", { cx: px(s), cy: py(s), r: Math.max(radio(s), 2.5) + 3, class: "anillo" }, gL);
+        rotular(s, "rotulo");
+      }
+    }
+
+    function cercano(e, umbral) {
+      const p = puntoSVG(svgM, e);
+      let mejor = null, dm = Infinity;
+      for (const t of D.topicos) {
+        if (!visible(t)) continue;
+        const d = Math.hypot(px(t) - p.x, py(t) - p.y) - Math.max(radio(t), 2.5);
+        if (d < dm) { dm = d; mejor = t; }
+      }
+      return dm <= umbral ? mejor : null;
+    }
+    const tipTopico = t => `<strong>${esc(etiq(t))}</strong>` +
+      `<span>${n0(t.notas)} notas · ${esc(minPrincipal(t))}${t.tipo === "autoridad" ? " · agenda de autoridad" : ""}</span>` +
+      `<span>Por mil notas: ${n1(t.antes)} (2018–22) → ${n1(t.reciente)} (2023–26), ${TEND[tend(t)]}</span>`;
+    svgM.addEventListener("pointermove", e => {
+      const t = cercano(e, 6);
+      svgM.style.cursor = t ? "pointer" : "default";
+      if (t) mostrarTip(tipTopico(t), e); else ocultarTip();
+    });
+    svgM.addEventListener("pointerleave", ocultarTip);
+    svgM.addEventListener("click", e => { const t = cercano(e, 12); if (t) seleccionar(t.id); });
+
+    $("#leyenda-mapa").innerHTML =
+      [4, 3, 2, 1, 0].map(k => `<span><i class="punto ${TCLS[k]}"></i>${TEND[k][0].toUpperCase() + TEND[k].slice(1)}</span>`).join("") +
+      `<span><i class="punto hueco"></i>Agenda de autoridad</span>`;
+
+    // controles del mapa
+    const selMin = $("#f-min");
+    MIN.forEach((m, i) => { const o = document.createElement("option"); o.value = i; o.textContent = m; selMin.appendChild(o); });
+    selMin.addEventListener("change", () => { estado.min = selMin.value; dibujarMapa(); });
+    let tq;
+    $("#buscar").addEventListener("input", e => {
+      clearTimeout(tq);
+      tq = setTimeout(() => { estado.q = norm(e.target.value.trim()); dibujarMapa(); }, 120);
+    });
+    $("#f-tipo").addEventListener("click", e => {
+      const b = e.target.closest("button[data-tipo]"); if (!b) return;
+      estado.tipo = b.dataset.tipo;
+      $("#f-tipo").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b));
+      dibujarMapa();
+    });
+
+    /* ---------------- ficha ---------------- */
+    const ficha = $("#ficha");
+    function dibujarFicha() {
+      const t = T.get(estado.sel);
+      const notas = estado.notas === "representativas" ? t.representativas : t.recientes;
+      ficha.innerHTML = `
+        <p class="sobre">Tópico ${t.id} · ${t.tipo === "autoridad" ? "Agenda de autoridad" : "Tema"}</p>
+        <h3>${esc(etiq(t))}</h3>
+        <ul class="chips" aria-label="Palabras clave">${t.palabras.map(p => `<li>${esc(p)}</li>`).join("")}</ul>
+        <dl class="hechos">
+          <div><dt>Notas en el tópico</dt><dd class="num">${n0(t.notas)}</dd></div>
+          <div><dt>Ministerio principal</dt><dd>${esc(minPrincipal(t))}</dd></div>
+          <div><dt>Nombran la IA</dt><dd class="num">${n0(t.ia)} (${pct(100 * t.ia / t.notas)})</dd></div>
+          <div><dt>Por mil notas, 2018–22 → 2023–26</dt><dd class="num">${n1(t.antes)} → ${n1(t.reciente)}
+            <span class="tend"><i class="punto ${TCLS[tend(t)]}"></i>${TEND[tend(t)]}</span></dd></div>
+        </dl>
+        <div class="sub"><h4>Peso por año</h4>
+          <div class="seg" role="group" aria-label="Forma de contar">
+            <button type="button" data-vista="cruda" aria-pressed="${estado.vista === "cruda"}">Todas las notas</button>
+            <button type="button" data-vista="pareja" aria-pressed="${estado.vista === "pareja"}">Cada ministerio pesa igual</button>
+          </div></div>
+        <div id="ficha-linea"></div>
+        <p class="nota-graf">${estado.vista === "cruda"
+          ? "Notas del tópico por cada mil notas ministeriales del año."
+          : "Promedio, entre los ministerios con notas ese año, de cuántas de cada mil notas del ministerio caen en el tópico."} 2026 llega hasta noviembre.</p>
+        <h4>Ministerios que publican en este tópico</h4>
+        <div class="barras" id="ficha-min"></div>
+        <div class="sub"><h4>Notas del tópico</h4>
+          <div class="seg" role="group" aria-label="Notas a mostrar">
+            <button type="button" data-notas="representativas" aria-pressed="${estado.notas === "representativas"}">Más representativas</button>
+            <button type="button" data-notas="recientes" aria-pressed="${estado.notas === "recientes"}">Más recientes</button>
+          </div></div>
+        <ol class="notas">${notas.map(([f, o, ti, u]) =>
+          `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(ti)}</a><span class="meta">${fecha(f)} · ${esc(ORG[o])}</span></li>`).join("")}</ol>`;
+      const serie = estado.vista === "cruda" ? t.serie : t.pareja;
+      grafLinea($("#ficha-linea"), {
+        vals: serie, alto: 200, etiqueta: "Peso del tópico por año",
+        tip: i => `<strong>${A[i]}</strong><span>${serie[i] == null ? "sin datos" : nfc.format(serie[i]) + " por mil"}` +
+          (estado.vista === "cruda" ? ` · ${n0(conteo(t.serie, i))} notas` : "") + "</span>",
+      });
+      const tot = t.notas;
+      barras($("#ficha-min"), t.ministerios.slice(0, 6).map(([m, n]) => ({
+        et: esc(MIN[m]), v: n, txt: `${n0(n)} · ${pct(100 * n / tot)}`,
+      })));
+    }
+    ficha.addEventListener("click", e => {
+      const b = e.target.closest("button[data-vista],button[data-notas]"); if (!b) return;
+      if (b.dataset.vista) estado.vista = b.dataset.vista; else estado.notas = b.dataset.notas;
+      dibujarFicha();
+    });
+
+    function seleccionar(id, desplazar) {
+      estado.sel = id;
+      try { history.replaceState(null, "", "#t" + id); } catch (e) { /* sin historial */ }
+      dibujarMapa();
+      dibujarFicha();
+      marcarFilas();
+      if (desplazar) $("#explorar").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    }
+
+    /* ---------------- lista con mapa de calor ---------------- */
+    const temas = D.topicos.filter(t => t.tipo === "tema");
+    const calor = $("#calor");
+    calor.style.setProperty("--n", NA);
+    const clase = v => { let c = ""; CORTES.forEach((k, i) => { if (v >= k) c = "s" + (i + 1); }); return c; };
+    function dibujarLista() {
+      let L;
+      if (estado.lista === "crecen") L = temas.filter(t => t.reciente >= 2).sort((a, b) => b.razon - a.razon).slice(0, 25);
+      else if (estado.lista === "caen") L = temas.filter(t => t.antes >= 2).sort((a, b) => a.razon - b.razon).slice(0, 25);
+      else if (estado.lista === "ia") L = D.topicos.filter(esIA).sort((a, b) => b.ia / b.notas - a.ia / a.notas);
+      else L = [...D.topicos].sort((a, b) => b.notas - a.notas);
+      const cab = `<div class="fila cab" aria-hidden="true"><span>Tópico</span>${A.map((a, i) =>
+        `<span>${i === 0 ? a : "’" + String(a).slice(2)}</span>`).join("")}<span style="text-align:left;padding-left:10px">Ministerio principal</span><span style="text-align:right">Notas</span></div>`;
+      calor.innerHTML = cab + L.map(t => `<button type="button" class="fila" data-id="${t.id}"` +
+        ` aria-label="${esc(etiq(t))}, ${n0(t.notas)} notas, ${TEND[tend(t)]}">` +
+        `<span class="et">${esc(etiq(t, 3))}${badge(t)}</span>` +
+        t.serie.map((v, i) => `<span class="celda ${clase(v)}" data-i="${i}"></span>`).join("") +
+        `<span class="min">${esc(minPrincipal(t))}</span><span class="n">${n0(t.notas)}</span></button>`).join("");
+      marcarFilas();
+    }
+    function marcarFilas() {
+      calor.querySelectorAll("button.fila").forEach(b => b.setAttribute("aria-current", +b.dataset.id === estado.sel));
+    }
+    calor.addEventListener("click", e => { const b = e.target.closest("button.fila"); if (b) seleccionar(+b.dataset.id, true); });
+    calor.addEventListener("pointermove", e => {
+      const c = e.target.closest(".celda"); if (!c) { ocultarTip(); return; }
+      const t = T.get(+c.closest("button.fila").dataset.id), i = +c.dataset.i;
+      mostrarTip(`<strong>${A[i]} · ${esc(etiq(t, 3))}</strong><span>${nfc.format(t.serie[i])} por mil · ${n0(conteo(t.serie, i))} notas</span>`, e);
+    });
+    calor.addEventListener("pointerleave", ocultarTip);
+    $("#f-lista").addEventListener("click", e => {
+      const b = e.target.closest("button[data-lista]"); if (!b) return;
+      estado.lista = b.dataset.lista;
+      $("#f-lista").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b));
+      dibujarLista();
+    });
+    $("#escala").innerHTML = "<span>Por mil notas del año:</span>" + CORTES.map((k, i) =>
+      `<span><i class="s${i + 1}"></i>${nfc.format(k)}${i === CORTES.length - 1 ? " o más" : ""}</span>`).join("") +
+      `<span><i style="background:var(--vacio)"></i>menos de ${nfc.format(CORTES[0])}</span>`;
+
+    /* ---------------- ministerios ---------------- */
+    const ordenMin = D.ministerios.map((m, i) => ({ m, i })).sort((a, b) => b.m.agenda - a.m.agenda);
+    estado.minSel = ordenMin[0].i;
+    function dibujarBarrasMin() {
+      barras($("#barras-min"), ordenMin.map(({ m, i }) => ({ id: i, et: esc(m.nombre), v: m.agenda, txt: pct(m.agenda), actual: i === estado.minSel })),
+        { clic: i => { estado.minSel = i; dibujarBarrasMin(); dibujarPerfil(); } });
+    }
+    function dibujarPerfil() {
+      const m = D.ministerios[estado.minSel];
+      const p = $("#perfil");
+      p.innerHTML = `<p class="sobre">Perfil del ministerio</p><h3>${esc(m.nombre)}</h3>
+        <p class="resumen">${n0(m.notas)} notas entre ${A[0]} y ${A[NA - 1]}; ${pct(m.agenda)} en tópicos de agenda de autoridad; ${n0(m.ia)} nombran la IA.</p>
+        <div style="display:grid;gap:6px"><h4>Notas por año</h4><div id="perfil-cob"></div></div>
+        <div style="display:grid;gap:8px"><h4>Sus tópicos principales (% de sus notas)</h4><div class="barras" id="perfil-top"></div></div>
+        <button type="button" class="boton" id="ver-en-mapa">Ver sus tópicos en el mapa</button>`;
+      // cobertura: columnas por año
+      const W = 560, H = 92, ml = 38, mr = 12, mt = 8, mb = 20;
+      const svg = S("svg", { viewBox: `0 0 ${W} ${H}`, class: "graf", role: "img", "aria-label": "Notas por año" });
+      $("#perfil-cob").appendChild(svg);
+      const tk = ticks(Math.max(...m.por_anio, 1)), ymax = tk[tk.length - 1];
+      const paso = (W - ml - mr) / NA, ancho = Math.min(22, paso - 4);
+      S("line", { x1: ml, x2: W - mr, y1: H - mb, y2: H - mb, class: "base" }, svg);
+      S("text", { x: ml - 6, y: mt + 4, class: "tick", "text-anchor": "end" }, svg).textContent = n0(ymax);
+      m.por_anio.forEach((v, i) => {
+        const x = ml + i * paso + (paso - ancho) / 2, hh = (H - mt - mb) * v / ymax;
+        if (v > 0) {
+          const r = Math.min(4, hh);
+          S("path", { d: `M${x},${H - mb}V${H - mb - hh + r}q0,-${r} ${r},-${r}h${ancho - 2 * r}q${r},0 ${r},${r}V${H - mb}Z`, class: "col" }, svg);
+        }
+        if (i % 2 === 0 || i === NA - 1)
+          S("text", { x: x + ancho / 2, y: H - 5, class: "tick", "text-anchor": "middle" }, svg).textContent = i === 0 || i === NA - 1 ? A[i] : "’" + String(A[i]).slice(2);
+      });
+      const capa = S("rect", { x: ml, y: 0, width: W - ml - mr, height: H, fill: "transparent" }, svg);
+      capa.addEventListener("pointermove", e => {
+        const i = clamp(Math.floor((puntoSVG(svg, e).x - ml) / paso), 0, NA - 1);
+        mostrarTip(`<strong>${A[i]}</strong><span>${n0(m.por_anio[i])} notas</span>`, e);
+      });
+      capa.addEventListener("pointerleave", ocultarTip);
+      barras($("#perfil-top"), m.topicos.map(([id, v]) => ({ id, et: esc(etiq(T.get(id), 3)) + badge(T.get(id)), v, txt: n1(v) + " %" })),
+        { clic: id => seleccionar(id, true) });
+      $("#ver-en-mapa").addEventListener("click", () => {
+        estado.min = String(estado.minSel); selMin.value = estado.min;
+        dibujarMapa();
+        $("#explorar").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+      });
+    }
+
+    /* ---------------- IA ---------------- */
+    const iaMil = D.ia_por_anio.map((n, i) => 1000 * n / D.notas_por_anio[i]);
+    grafLinea($("#ia-linea"), {
+      vals: iaMil, alto: 230, eventos: EVENTOS, etiqueta: "Notas que nombran la IA por cada mil notas del año",
+      tip: i => `<strong>${A[i]}</strong><span>${nfc.format(+iaMil[i].toFixed(2))} por mil · ${n0(D.ia_por_anio[i])} de ${n0(D.notas_por_anio[i])} notas</span>`,
+    });
+    $("#ia-eventos").innerHTML = EVENTOS.map(e => `<li>${esc(e.t)}</li>`).join("");
+    const totIA = D.ia_por_anio.reduce((a, b) => a + b, 0);
+    barras($("#ia-topicos"), D.ia_por_topico.slice(0, 11).map(([id, n]) => id < 0
+      ? { et: "<em>Sin tópico asignado</em>", v: n, txt: `${n0(n)} · ${pct(100 * n / totIA)}` }
+      : { id, et: esc(etiq(T.get(id), 3)), v: n, txt: `${n0(n)} · ${pct(100 * n / totIA)}` }), { clic: id => seleccionar(id, true) });
+    barras($("#ia-min"), D.ministerios.map((m, i) => ({ m, i })).filter(x => x.m.ia > 0).sort((a, b) => b.m.ia - a.m.ia).slice(0, 10)
+      .map(({ m }) => ({ et: esc(m.nombre), v: m.ia, txt: `${n0(m.ia)} · ${n1(1000 * m.ia / m.notas)} por mil` })));
+
+    /* ---------------- método ---------------- */
+    $("#metodo-texto").innerHTML = `<ul>
+      <li><strong>Corpus.</strong> ${n0(D.notas_total)} notas de prensa de ${MIN.length} ministerios y sus subsecretarías, extraídas de sus sitios web con el texto completo de cada nota. Las series por año usan ${n0(D.notas)} notas de ${A[0]} a ${A[NA - 1]}; 2026 llega hasta noviembre.</li>
+      <li><strong>Modelo.</strong> BERTopic con representaciones del modelo multilingüe paraphrase-multilingual-MiniLM-L12-v2 sobre el título y el primer párrafo de cada nota. UMAP reduce a 5 dimensiones y HDBSCAN agrupa (selección «leaf», mínimo 40 notas por tópico). Las palabras clave salen de c-TF-IDF sobre las primeras 600 palabras, sin palabras vacías, meses, días, verbos de cita ni palabras que aparecen en más de una de cada cuatro notas.</li>
+      <li><strong>Notas sin tópico.</strong> HDBSCAN deja fuera al ${pct(D.sin_topico_hdbscan)} de las notas. Cada una se asigna a su tópico más parecido si se parece a él al menos tanto como las notas propias del tópico (percentil 25 de su similitud). Quedan sin tópico el ${pct(D.sin_topico)} de las notas de ${A[0]}–${A[NA - 1]}.</li>
+      <li><strong>Etiquetas.</strong> Cada tópico se nombra con sus primeras palabras clave; no son nombres puestos a mano y conviene leer las notas de ejemplo antes de interpretar un tópico.</li>
+      <li><strong>Agenda de autoridad.</strong> Un tópico se marca así cuando su primera palabra clave, o dos de las cuatro primeras, contienen el apellido de un ministro o ministra (2006–2026), de un presidente o de un subsecretario. La regla se revisó a mano, pero puede dejar fuera algún caso.</li>
+      <li><strong>Crecer y caer.</strong> Se compara el promedio anual por mil notas de 2023–2026 con el de 2018–2022, sumando 0,5 a ambos para no exagerar los tópicos pequeños. No todos los ministerios tienen archivo completo desde 2014, así que el período comparable empieza en 2018. La vista «cada ministerio pesa igual» corrige en parte la entrada de fuentes nuevas, como Seguridad Pública y Defensa en 2025–2026.</li>
+      <li><strong>Mapa.</strong> Las posiciones vienen de proyectar a dos dimensiones (UMAP) el centro de cada tópico; la cercanía es aproximada y los ejes no tienen unidades.</li>
+    </ul>`;
+
+    dibujarMapa();
+    dibujarFicha();
+    dibujarLista();
+    dibujarBarrasMin();
+    dibujarPerfil();
+  }
+})();
+</script>

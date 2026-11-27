@@ -14,12 +14,16 @@ Etapas (cada una deja su resultado en data/topicos_ministerios/ y se corre apart
     embeber   embeddings con paraphrase-multilingual-MiniLM-L12-v2 (por tramos, reanudable)
     modelar   UMAP + HDBSCAN + c-TF-IDF y asignación de tópicos
     analizar  participación de cada tópico por año y por ministerio, tópicos emergentes
+    figuras   mapa de calor de tópicos y barras de agenda de autoridad (carpeta figuras/)
+    explorador  datos y página HTML para recorrer los tópicos (explorador/index.html)
 
 Uso:
     python analisis/topicos_ministerios.py preparar
     python analisis/topicos_ministerios.py embeber
     python analisis/topicos_ministerios.py modelar
     python analisis/topicos_ministerios.py analizar
+    python analisis/topicos_ministerios.py figuras
+    python analisis/topicos_ministerios.py explorador
 """
 import csv
 import re
@@ -309,6 +313,19 @@ def es_agenda(palabras: str, apellidos: set[str]) -> bool:
     return con[0] or sum(con) >= 2
 
 
+def participacion(d):
+    """Notas de cada tópico por mil notas del año, en bruto y pesando igual a cada ministerio
+    (promedio de la participación del tópico dentro de cada ministerio con notas ese año)."""
+    cruda = pd.crosstab(d.topico, d.anio).div(d.groupby("anio").size(), axis=1) * 1000
+    por_min = pd.crosstab([d.ministerio, d.topico], d.anio)
+    por_min = por_min.reindex(pd.MultiIndex.from_product(  # ceros explícitos para los tópicos ausentes
+        [sorted(d.ministerio.unique()), sorted(d.topico.unique())]), fill_value=0)
+    # años sin notas del ministerio quedan como NaN y no entran al promedio
+    por_min = por_min.div(por_min.groupby(level=0).transform("sum").replace(0, np.nan))
+    pareja = por_min.groupby(level=1).mean() * 1000
+    return cruda.drop(index=-1, errors="ignore"), pareja.drop(index=-1, errors="ignore")
+
+
 def analizar():
     d = pd.read_parquet(DOCS, columns=["fecha", "anio", "ministerio", "titulo", "texto_rep"])
     asign = pd.read_parquet(SALIDA / "topicos.parquet")
@@ -328,15 +345,7 @@ def analizar():
     print("Notas por año:", " ".join(f"{a}:{n}" for a, n in por_anio.items()))
     print(f"Sin tópico: {100 * (d.topico == -1).mean():.1f} %")
 
-    # participación por año (por mil notas del año) y versión que pesa igual a cada ministerio
-    cruda = pd.crosstab(d.topico, d.anio).div(por_anio, axis=1) * 1000
-    por_min = pd.crosstab([d.ministerio, d.topico], d.anio)
-    por_min = por_min.reindex(pd.MultiIndex.from_product(  # ceros explícitos para los tópicos ausentes
-        [sorted(d.ministerio.unique()), sorted(d.topico.unique())]), fill_value=0)
-    # años sin notas del ministerio quedan como NaN y no entran al promedio
-    por_min = por_min.div(por_min.groupby(level=0).transform("sum").replace(0, np.nan))
-    pareja = por_min.groupby(level=1).mean() * 1000
-    cruda, pareja = cruda.drop(index=-1, errors="ignore"), pareja.drop(index=-1, errors="ignore")
+    cruda, pareja = participacion(d)
     cruda.round(2).assign(etiqueta=info.etiqueta).to_csv(SALIDA / "topicos_por_anio.csv", encoding="utf-8")
 
     def media(t, a, b):
@@ -508,9 +517,110 @@ def figuras():
     print("Figuras:", FIGURAS / "topicos_ministerios.png", FIGURAS / "agenda_autoridades.png")
 
 
+# ---------------------------------------------------------------- explorador
+EXPLORADOR = SALIDA / "explorador"
+PLANTILLA = Path(__file__).resolve().parent / "explorador_topicos.html"
+MARCA_DATOS = '<script id="datos" type="application/json"></script>'
+
+
+def explorador(n_rep=5, n_rec=5):
+    """Datos del explorador HTML de tópicos. Escribe explorador/datos.json y explorador/index.html
+    (la plantilla analisis/explorador_topicos.html con los datos incrustados, para abrirla sin servidor)."""
+    import json
+    from umap import UMAP
+
+    d = pd.read_parquet(DOCS, columns=["fecha", "anio", "organismo", "ministerio", "titulo", "url", "texto_rep"])
+    asign = pd.read_parquet(SALIDA / "topicos.parquet")
+    d["topico"] = asign.topico_ext.values
+    d["ia"] = d.texto_rep.map(lambda t: bool(RE_IA.search(t)))
+    d = d.drop(columns="texto_rep")
+    emb = np.load(EMB)
+    info = pd.read_csv(SALIDA / "topicos_info.csv").set_index("Topic")
+    em = pd.read_csv(SALIDA / "topicos_emergentes.csv", index_col=0)
+    reciente = d.anio >= DESDE
+    dr = d[reciente]
+    cruda, pareja = participacion(dr)
+    anios = sorted(dr.anio.unique().tolist())
+    cruda, pareja = cruda.reindex(columns=anios, fill_value=0), pareja.reindex(columns=anios)
+
+    ministerios = sorted(d.ministerio.unique())
+    im = {m: i for i, m in enumerate(ministerios)}
+    organismos = sorted(d.organismo.unique())
+    io = {o: i for i, o in enumerate(organismos)}
+
+    def nota(i):
+        r = d.iloc[i]
+        return [r.fecha, io[r.organismo], str(r.titulo).strip(), r.url]
+
+    # centroide de cada tópico: base del mapa y de las notas más representativas
+    ids = [int(t) for t in em.index if t >= 0]
+    centros = np.vstack([emb[d.topico.values == t].mean(0) for t in ids])
+    centros /= np.linalg.norm(centros, axis=1, keepdims=True)
+    xy = UMAP(n_neighbors=12, n_components=2, min_dist=0.4, metric="cosine",
+              random_state=SEMILLA).fit_transform(centros)
+    xy = (xy - xy.min(0)) / (xy.max(0) - xy.min(0))
+
+    topicos = []
+    for k, t in enumerate(ids):
+        pos = np.flatnonzero(d.topico.values == t)
+        sim = emb[pos] @ centros[k]
+        rep = pos[np.argsort(-sim)[:n_rep]]
+        rec = [i for i in pos[np.argsort(d.fecha.values[pos])[::-1]] if i not in set(rep)][:n_rec]
+        r = em.loc[t]
+        g = d.iloc[pos]
+        topicos.append({
+            "id": t, "palabras": info.palabras[t].split(", "),
+            "tipo": "autoridad" if r.tipo == "agenda de autoridad" else "tema",
+            "notas": int(len(pos)), "ia": int(g.ia.sum()), "pct_ia": float(r.pct_ia),
+            "x": round(float(xy[k, 0]), 4), "y": round(float(xy[k, 1]), 4),
+            "antes": float(r.antes), "reciente": float(r.reciente),
+            "razon": float(r.razon), "razon_pareja": float(r.razon_pareja),
+            "serie": [round(float(v), 2) for v in cruda.loc[t]] if t in cruda.index else [0] * len(anios),
+            "pareja": [None if pd.isna(v) else round(float(v), 2) for v in pareja.loc[t]]
+                      if t in pareja.index else [0] * len(anios),
+            "ministerios": [[im[m], int(n)] for m, n in g.ministerio.value_counts().items()],
+            "representativas": [nota(i) for i in rep], "recientes": [nota(i) for i in rec],
+        })
+
+    tipo = em.tipo.reindex(dr.topico).values
+    agenda = pd.Series(tipo == "agenda de autoridad", index=dr.index)
+    mins = []
+    for m in ministerios:
+        g = dr[dr.ministerio == m]
+        vc = g[g.topico >= 0].topico.value_counts()
+        mins.append({
+            "nombre": m, "notas": int(len(g)), "ia": int(g.ia.sum()),
+            "agenda": round(100 * float(agenda[g.index].mean()), 1),
+            "por_anio": [int((g.anio == a).sum()) for a in anios],
+            "topicos": [[int(t), round(100 * n / len(g), 1)] for t, n in vc.head(10).items()],
+        })
+    ia_top = dr[dr.ia].topico.value_counts()
+    datos = {
+        "anios": anios, "desde": DESDE, "antes": list(ANTES), "reciente": list(RECIENTE),
+        "notas_total": int(len(d)), "notas": int(len(dr)),
+        "notas_por_anio": [int((dr.anio == a).sum()) for a in anios],
+        "sin_topico": round(100 * float((dr.topico == -1).mean()), 1),
+        "sin_topico_hdbscan": round(100 * float((asign.topico == -1).mean()), 1),
+        "agenda_por_anio": [round(100 * float(agenda[dr.anio == a].mean()), 1) for a in anios],
+        "ia_por_anio": [int((dr.ia & (dr.anio == a)).sum()) for a in anios],
+        "ia_por_topico": [[int(t), int(n)] for t, n in ia_top.items()],
+        "ministerios": mins, "organismos": organismos, "topicos": topicos,
+    }
+    EXPLORADOR.mkdir(exist_ok=True)
+    texto = json.dumps(datos, ensure_ascii=False, separators=(",", ":"))
+    (EXPLORADOR / "datos.json").write_text(texto, encoding="utf-8")
+    plantilla = PLANTILLA.read_text(encoding="utf-8")
+    html = plantilla.replace(MARCA_DATOS, MARCA_DATOS.replace("></", ">" + texto.replace("</", "<\\/") + "</"))
+    (EXPLORADOR / "index.html").write_text(
+        '<!doctype html>\n<html lang="es">\n<head>\n<meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">\n</head>\n<body>\n'
+        + html + "\n</body>\n</html>\n", encoding="utf-8")
+    print(f"{len(topicos)} tópicos, {len(texto) / 1e6:.1f} MB de datos:", EXPLORADOR / "index.html")
+
+
 if __name__ == "__main__":
     etapas = {"preparar": preparar, "embeber": embeber, "modelar": modelar, "analizar": analizar,
-              "figuras": figuras}
+              "figuras": figuras, "explorador": explorador}
     if len(sys.argv) != 2 or sys.argv[1] not in etapas:
         sys.exit(__doc__)
     etapas[sys.argv[1]]()

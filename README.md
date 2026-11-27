@@ -378,6 +378,7 @@ python analisis/topicos_ministerios.py embeber    # embeddings (unos 50 minutos 
 python analisis/topicos_ministerios.py modelar    # UMAP + HDBSCAN + c-TF-IDF (BERTopic)
 python analisis/topicos_ministerios.py analizar   # tópicos por año y por ministerio
 python analisis/topicos_ministerios.py figuras
+python analisis/topicos_ministerios.py explorador # página HTML para recorrer los tópicos
 ```
 
 Decisiones del modelo:
@@ -394,7 +395,9 @@ La comparación entre períodos usa notas de cada tópico por cada mil notas del
 
 ![Notas ministeriales organizadas en torno a una autoridad](figuras/agenda_autoridades.png)
 
-Los resultados intermedios (embeddings, modelo y tablas) quedan en `data/topicos_ministerios/`, que no se versiona.
+La etapa `explorador` arma `data/topicos_ministerios/explorador/index.html`, una página que se abre en el navegador sin servidor. Trae un mapa de tópicos (cercanía por contenido, color según crecen o caen), la ficha de cada tópico con su serie anual, sus ministerios y notas de ejemplo, listas de los tópicos que más crecen y caen, el perfil de cada ministerio y dónde aparecen las notas que nombran la IA. La plantilla es `analisis/explorador_topicos.html`; si se abre sin datos incrustados, lee `datos.json` desde la misma carpeta.
+
+Los resultados intermedios (embeddings, modelo, tablas y explorador) quedan en `data/topicos_ministerios/`, que no se versiona.
 
 ## Estructura
 
@@ -423,6 +426,7 @@ scrapers/
 analisis/
   topicos_ministerios.py         tópicos de la prensa ministerial y su evolución (BERTopic)
   stopwords_es.txt               palabras vacías del español (NLTK + Snowball)
+  explorador_topicos.html        plantilla del explorador HTML de tópicos
 figuras/
   cobertura.py                   genera cobertura.png
   topicos_ministerios.png        tópicos que aparecen y desaparecen (analisis/topicos_ministerios.py)
