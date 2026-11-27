@@ -395,7 +395,7 @@ La comparación entre períodos usa notas de cada tópico por cada mil notas del
 
 ![Notas ministeriales organizadas en torno a una autoridad](figuras/agenda_autoridades.png)
 
-La etapa `explorador` arma `data/topicos_ministerios/explorador/index.html`, una página que se abre en el navegador sin servidor. Trae un mapa de tópicos (cercanía por contenido, color según crecen o caen), la ficha de cada tópico con su serie anual, sus ministerios y notas de ejemplo, listas de los tópicos que más crecen y caen, el perfil de cada ministerio y dónde aparecen las notas que nombran la IA. La plantilla es `analisis/explorador_topicos.html`; si se abre sin datos incrustados, lee `datos.json` desde la misma carpeta.
+La etapa `explorador` arma `data/topicos_ministerios/explorador/index.html`, una página que se abre en el navegador sin servidor. Trae un mapa de tópicos (cercanía por contenido, color según crecen o caen), un mapa de árbol con todos los tópicos agrupados bajo el ministerio que más publica sobre ellos (con selector de período: 2014–2026, 2018–2022 o 2023–2026), la ficha de cada tópico con su serie anual, sus ministerios y notas de ejemplo, listas de los tópicos que más crecen y caen, el perfil de cada ministerio y dónde aparecen las notas que nombran la IA. La plantilla es `analisis/explorador_topicos.html`; si se abre sin datos incrustados, lee `datos.json` desde la misma carpeta.
 
 Los resultados intermedios (embeddings, modelo, tablas y explorador) quedan en `data/topicos_ministerios/`, que no se versiona.
 

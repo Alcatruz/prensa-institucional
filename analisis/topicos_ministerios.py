@@ -568,6 +568,11 @@ def explorador(n_rep=5, n_rec=5):
         rec = [i for i in pos[np.argsort(d.fecha.values[pos])[::-1]] if i not in set(rep)][:n_rec]
         r = em.loc[t]
         g = d.iloc[pos]
+        gr = g[g.anio >= DESDE]
+        # notas de cada ministerio en el tópico: 2014-2026, período anterior y reciente
+        pm = pd.DataFrame({"n": gr.ministerio.value_counts(),
+                           "a": gr[gr.anio.between(*ANTES)].ministerio.value_counts(),
+                           "r": gr[gr.anio.between(*RECIENTE)].ministerio.value_counts()}).fillna(0).astype(int)
         topicos.append({
             "id": t, "palabras": info.palabras[t].split(", "),
             "tipo": "autoridad" if r.tipo == "agenda de autoridad" else "tema",
@@ -579,6 +584,7 @@ def explorador(n_rep=5, n_rec=5):
             "pareja": [None if pd.isna(v) else round(float(v), 2) for v in pareja.loc[t]]
                       if t in pareja.index else [0] * len(anios),
             "ministerios": [[im[m], int(n)] for m, n in g.ministerio.value_counts().items()],
+            "por_periodo": [[im[m], *map(int, f)] for m, f in pm.sort_values("n", ascending=False).iterrows()],
             "representativas": [nota(i) for i in rep], "recientes": [nota(i) for i in rec],
         })
 
@@ -593,6 +599,8 @@ def explorador(n_rep=5, n_rec=5):
             "agenda": round(100 * float(agenda[g.index].mean()), 1),
             "por_anio": [int((g.anio == a).sum()) for a in anios],
             "topicos": [[int(t), round(100 * n / len(g), 1)] for t, n in vc.head(10).items()],
+            "sin_topico": [int((g.topico == -1).sum()), int(((g.topico == -1) & g.anio.between(*ANTES)).sum()),
+                           int(((g.topico == -1) & g.anio.between(*RECIENTE)).sum())],
         })
     ia_top = dr[dr.ia].topico.value_counts()
     datos = {
