@@ -368,6 +368,34 @@ python scrapers/fusionar_respaldo.py data/_respaldo_AAAA-MM-DD --solo interior
 
 Los scrapers incluyen pausas entre solicitudes (por defecto, dos descargas simultáneas y un segundo de espera). Úsalos con moderación y respetando las condiciones de cada sitio.
 
+## Análisis exploratorio: tópicos de la prensa ministerial
+
+`analisis/topicos_ministerios.py` modela los tópicos de las notas de los 25 ministerios y sus subsecretarías (91.753 notas tras quitar 1.851 duplicadas) sin filtrar por tema, para ver qué comunica cada ministerio y qué tópicos aparecen o desaparecen con los años. Cada subsecretaría se cuenta con su ministerio.
+
+```bash
+python analisis/topicos_ministerios.py preparar   # junta las notas y arma el texto de cada una
+python analisis/topicos_ministerios.py embeber    # embeddings (unos 50 minutos en CPU; reanudable)
+python analisis/topicos_ministerios.py modelar    # UMAP + HDBSCAN + c-TF-IDF (BERTopic)
+python analisis/topicos_ministerios.py analizar   # tópicos por año y por ministerio
+python analisis/topicos_ministerios.py figuras
+```
+
+Decisiones del modelo:
+
+- **Texto.** Los embeddings (`paraphrase-multilingual-MiniLM-L12-v2`) se calculan sobre el título y las primeras 100 palabras de la nota. Las palabras clave de cada tópico salen de las primeras 600.
+- **Palabras vacías.** Son las listas NLTK y Snowball del español (`analisis/stopwords_es.txt`), más verbos de cita y meses, más las palabras presentes en más de un cuarto de las notas, como "gobierno", "ministro" o "región".
+- **Agrupamiento.** HDBSCAN usa la selección `leaf` con un mínimo de 40 notas por tópico. Con la selección por defecto, ministerios como Culturas o Deporte caían casi enteros en un solo tópico.
+- **Notas sin tópico.** Quedan fuera del agrupamiento el 54 % de las notas. Se asignan al tópico más parecido solo si se le parecen tanto como las notas propias del tópico (percentil 25), y así queda un 28 % sin tópico.
+- **Tópicos de agenda de autoridad.** Son los encabezados por el apellido de un ministro, presidente o subsecretario (base `ministros_2006_2026.csv` más una lista breve en el script). Se separan de los temas porque nacen y mueren con la persona.
+
+La comparación entre períodos usa notas de cada tópico por cada mil notas del año. Como no todos los ministerios tienen archivo desde 2014, el script repite el cálculo dando el mismo peso a cada ministerio presente ese año.
+
+![Tópicos de la prensa ministerial que aparecen y desaparecen](figuras/topicos_ministerios.png)
+
+![Notas ministeriales organizadas en torno a una autoridad](figuras/agenda_autoridades.png)
+
+Los resultados intermedios (embeddings, modelo y tablas) quedan en `data/topicos_ministerios/`, que no se versiona.
+
 ## Estructura
 
 ```
@@ -392,8 +420,13 @@ scrapers/
   consolidar_prensa.py           une los CSV en un solo archivo (CSV y XLSX)
   cobertura_por_gobierno.py      notas por organismo y gobierno
   ministros_gabinete.py          base de ministros y ministras 2006-2026
+analisis/
+  topicos_ministerios.py         tópicos de la prensa ministerial y su evolución (BERTopic)
+  stopwords_es.txt               palabras vacías del español (NLTK + Snowball)
 figuras/
   cobertura.py                   genera cobertura.png
+  topicos_ministerios.png        tópicos que aparecen y desaparecen (analisis/topicos_ministerios.py)
+  agenda_autoridades.png         notas centradas en una autoridad, por ministerio
 data/                            salida de los scrapers (no versionada)
   sujetos/                       notas de los sitios del catálogo de sujetos obligados
 ```

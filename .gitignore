@@ -9,6 +9,13 @@
 /figuras/*
 !/figuras/cobertura.py
 !/figuras/cobertura.png
+!/figuras/topicos_ministerios.png
+!/figuras/agenda_autoridades.png
+
+!/analisis/
+/analisis/*
+!/analisis/topicos_ministerios.py
+!/analisis/stopwords_es.txt
 
 !/scrapers/
 /scrapers/*
