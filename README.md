@@ -395,7 +395,12 @@ La comparación entre períodos usa notas de cada tópico por cada mil notas del
 
 ![Notas ministeriales organizadas en torno a una autoridad](figuras/agenda_autoridades.png)
 
-La etapa `explorador` arma `data/topicos_ministerios/explorador/index.html`, una página que se abre en el navegador sin servidor. Trae un mapa de tópicos (cercanía por contenido, color según crecen o caen), un mapa de árbol con todos los tópicos agrupados bajo el ministerio que más publica sobre ellos (con selector de período: 2014–2026, 2018–2022 o 2023–2026), la ficha de cada tópico con su serie anual, sus ministerios y notas de ejemplo, listas de los tópicos que más crecen y caen, el perfil de cada ministerio y dónde aparecen las notas que nombran la IA. La plantilla es `analisis/explorador_topicos.html`; si se abre sin datos incrustados, lee `datos.json` desde la misma carpeta.
+La etapa `explorador` escribe dos versiones de una página que explica el método paso a paso (embeddings, UMAP, HDBSCAN, c-TF-IDF, medición en el tiempo, agenda de autoridad y diccionario de IA), con referencias a la literatura, y muestra los resultados para explorarlos: cobertura de notas por ministerio y año, mapa de tópicos con la ficha de cada uno, mapa de árbol de todos los tópicos por ministerio (con selector de período), los tópicos que más crecen y caen, el perfil de cada ministerio y dónde aparecen las notas que nombran la IA.
+
+- `docs/index.html`, versionada y lista para GitHub Pages (carpeta `docs/` de la rama `main`). Lee `docs/datos.json`, que solo trae resultados agregados (palabras clave, series por año y conteos por ministerio), sin texto, títulos ni enlaces de notas. Para verla en local hay que servir la carpeta, por ejemplo con `python -m http.server --directory docs`.
+- `data/topicos_ministerios/explorador/index.html`, no versionada, con los datos incrustados y notas de ejemplo de cada tópico; se abre con doble clic.
+
+La plantilla de ambas es `analisis/explorador_topicos.html`.
 
 Los resultados intermedios (embeddings, modelo, tablas y explorador) quedan en `data/topicos_ministerios/`, que no se versiona.
 
@@ -426,11 +431,14 @@ scrapers/
 analisis/
   topicos_ministerios.py         tópicos de la prensa ministerial y su evolución (BERTopic)
   stopwords_es.txt               palabras vacías del español (NLTK + Snowball)
-  explorador_topicos.html        plantilla del explorador HTML de tópicos
+  explorador_topicos.html        plantilla de la página de tópicos (docs/ y versión local)
 figuras/
   cobertura.py                   genera cobertura.png
   topicos_ministerios.png        tópicos que aparecen y desaparecen (analisis/topicos_ministerios.py)
   agenda_autoridades.png         notas centradas en una autoridad, por ministerio
+docs/
+  index.html                     página del análisis de tópicos (GitHub Pages)
+  datos.json                     resultados agregados que lee la página
 data/                            salida de los scrapers (no versionada)
   sujetos/                       notas de los sitios del catálogo de sujetos obligados
 ```

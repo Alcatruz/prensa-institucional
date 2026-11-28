@@ -18,6 +18,11 @@
 !/analisis/stopwords_es.txt
 !/analisis/explorador_topicos.html
 
+!/docs/
+/docs/*
+!/docs/index.html
+!/docs/datos.json
+
 !/scrapers/
 /scrapers/*
 !/scrapers/scraper_interior.py

@@ -1,0 +1,1249 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Modelo de tópicos (BERTopic) sobre la prensa de los ministerios de Chile, 2014-2026: método explicado paso a paso, resultados interactivos y referencias.">
+<title>Tópicos de la prensa ministerial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Explorador: una columna de 1180 px; mapa y ficha lado a lado, luego listas y perfiles apilados.
+   Azul y rojo institucionales; el azul es también la escala secuencial y un polo de la divergente. */
+:root {
+  --bg: #f3f5f7;
+  --surface: #ffffff;
+  --ink: #0f1b27;
+  --ink-2: #465564;
+  --muted: #727e8a;
+  --line: #dbe1e7;
+  --grid: #e8ecf0;
+  --axis: #bfc8d1;
+  --band: #f0f3f6;
+  --accent: #1660b8;
+  --accent-ink: #0f4f9a;
+  --accent-soft: #e4eefa;
+  --sel: #0f1b27;
+  --cae-2: #c8423f;
+  --cae-1: #f0a49c;
+  --neutro: #bcc3ca;
+  --crece-1: #8dbaf0;
+  --crece-2: #1c5cab;
+  --s1: #cde2fb; --s2: #9ec5f4; --s3: #6da7ec; --s4: #3987e5; --s5: #256abf; --s6: #184f95; --s7: #0d366b;
+  --vacio: #eef1f4;
+  --sobre-fuerte: #ffffff;
+  --sombra: 0 6px 24px rgba(15, 27, 39, 0.12);
+  --f-texto: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-cond: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1216; --surface: #161b21; --ink: #e8edf2; --ink-2: #b3bdc7; --muted: #8995a1;
+    --line: #29323b; --grid: #20272e; --axis: #3b4550; --band: #1a2027;
+    --accent: #5c9ee9; --accent-ink: #8dbaf0; --accent-soft: #1a2a3d; --sel: #ffffff;
+    --cae-2: #ec706b; --cae-1: #8c3f3b; --neutro: #4b545d; --crece-1: #2c5a92; --crece-2: #79aef0;
+    --s1: #16314f; --s2: #1b446f; --s3: #215a95; --s4: #2f74c8; --s5: #5598e7; --s6: #86b6ef; --s7: #cde2fb;
+    --vacio: #1c232a; --sobre-fuerte: #0e1216; --sombra: 0 6px 24px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1216; --surface: #161b21; --ink: #e8edf2; --ink-2: #b3bdc7; --muted: #8995a1;
+  --line: #29323b; --grid: #20272e; --axis: #3b4550; --band: #1a2027;
+  --accent: #5c9ee9; --accent-ink: #8dbaf0; --accent-soft: #1a2a3d; --sel: #ffffff;
+  --cae-2: #ec706b; --cae-1: #8c3f3b; --neutro: #4b545d; --crece-1: #2c5a92; --crece-2: #79aef0;
+  --s1: #16314f; --s2: #1b446f; --s3: #215a95; --s4: #2f74c8; --s5: #5598e7; --s6: #86b6ef; --s7: #cde2fb;
+  --vacio: #1c232a; --sobre-fuerte: #0e1216; --sombra: 0 6px 24px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-texto); font-size: 15px; line-height: 1.5; }
+.pagina {
+  max-width: 1180px; margin: 0 auto;
+  padding-block: 32px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px;
+}
+h1, h2, h3, h4 { margin: 0; font-weight: 600; text-wrap: balance; line-height: 1.2; }
+h1 { font-size: clamp(1.75rem, 4vw, 2.4rem); letter-spacing: -0.01em; }
+h2 { font-size: 1.4rem; }
+h3 { font-size: 1.15rem; }
+h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 500; }
+p { margin: 0; }
+a { color: var(--accent-ink); }
+a:hover { text-decoration-thickness: 2px; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+
+.sobre { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 500; }
+
+/* cabecera */
+.cabecera { display: grid; gap: 14px; }
+.bajada { max-width: 68ch; color: var(--ink-2); font-size: 1.02rem; }
+.cifras { display: flex; flex-wrap: wrap; gap: 10px 32px; margin: 8px 0 0; padding: 0; }
+.cifras div { display: grid; gap: 0; }
+.cifras dt { font-size: 0.78rem; color: var(--muted); }
+.cifras dd { margin: 0; font-size: 1.5rem; font-weight: 600; letter-spacing: -0.01em; }
+
+/* secciones */
+.bloque { display: grid; gap: 16px; min-width: 0; }
+.bloque > header { display: grid; gap: 6px; }
+.bloque > header p { max-width: 74ch; color: var(--ink-2); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; min-width: 0; }
+
+/* controles */
+.controles { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: end; }
+.campo { display: grid; gap: 4px; font-size: 0.8rem; color: var(--muted); }
+.campo input, .campo select {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  padding: 7px 10px; font-size: 0.92rem; color: var(--ink); min-width: 0;
+}
+.campo input { width: min(260px, 80vw); }
+.campo select { max-width: 80vw; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; padding: 6px 12px; font-size: 0.85rem; cursor: pointer; color: var(--ink-2); }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent-ink); font-weight: 500; }
+.seg button:hover { color: var(--ink); }
+.conteo { font-size: 0.85rem; color: var(--muted); }
+
+/* explorador */
+.explorador { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 920px) { .explorador { grid-template-columns: minmax(0, 1fr); } }
+.mapa-panel { display: grid; gap: 10px; }
+@media (min-width: 921px) { .mapa-panel { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); } }
+#mapa { width: 100%; height: auto; display: block; touch-action: manipulation; }
+.burbuja { fill: var(--c); stroke: var(--surface); stroke-width: 1; }
+.burbuja.autoridad { fill: var(--surface); stroke: var(--c); stroke-width: 2; }
+.burbuja.apagada { opacity: 0.1; }
+@media (prefers-reduced-motion: no-preference) { .burbuja { transition: opacity .2s, r .25s; } }
+.anillo { fill: none; stroke: var(--sel); stroke-width: 2; }
+.rotulo { font-size: 12px; font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; pointer-events: none; }
+.rotulo.menor { font-size: 11px; font-weight: 400; fill: var(--ink-2); }
+.t-cae2 { --c: var(--cae-2); --tc: var(--sobre-fuerte); } .t-cae1 { --c: var(--cae-1); --tc: var(--ink); }
+.t-neutro { --c: var(--neutro); --tc: var(--ink); }
+.t-crece1 { --c: var(--crece-1); --tc: var(--ink); } .t-crece2 { --c: var(--crece-2); --tc: var(--sobre-fuerte); }
+.leyenda { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.8rem; color: var(--ink-2); align-items: center; }
+.leyenda span { display: inline-flex; align-items: center; gap: 6px; }
+.punto { width: 10px; height: 10px; border-radius: 50%; background: var(--c); display: inline-block; flex: none; }
+.punto.hueco { background: transparent; border: 2px solid var(--muted); }
+.nota-graf { font-size: 0.8rem; color: var(--muted); }
+
+/* ficha */
+.ficha { display: grid; gap: 14px; }
+.ficha h3 { font-size: 1.25rem; }
+.chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.chips li { font-size: 0.8rem; padding: 2px 8px; border-radius: 999px; background: var(--band); color: var(--ink-2); border: 1px solid var(--line); }
+.hechos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin: 0; }
+.hechos div { display: grid; gap: 2px; min-width: 0; }
+.hechos dt { font-size: 0.78rem; color: var(--muted); }
+.hechos dd { margin: 0; font-weight: 500; }
+.tend { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--ink-2); font-weight: 400; white-space: nowrap; }
+.sub { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.notas { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.notas li { display: grid; gap: 1px; min-width: 0; }
+.notas a { font-weight: 500; text-decoration: none; overflow-wrap: anywhere; }
+.notas a:hover { text-decoration: underline; }
+.notas .meta { font-size: 0.8rem; color: var(--muted); }
+.insignia { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; vertical-align: 1px; }
+
+/* gráficos SVG */
+.graf { width: 100%; height: auto; display: block; overflow: visible; }
+.graf .banda { fill: var(--band); }
+.graf .gob { font-size: 10px; fill: var(--muted); }
+.graf .rejilla { stroke: var(--grid); stroke-width: 1; }
+.graf .base { stroke: var(--axis); stroke-width: 1; }
+.graf .tick { font-size: 10px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.graf .trazo { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.graf .pto { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+.graf .guia { stroke: var(--axis); stroke-width: 1; }
+.graf .foco { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+.graf .evento { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 3; }
+.graf .marca { fill: var(--surface); stroke: var(--muted); stroke-width: 1; }
+.graf .marca-t { font-size: 9.5px; fill: var(--ink-2); font-weight: 600; }
+.graf .col { fill: var(--accent); }
+
+/* barras HTML */
+.barras { display: grid; gap: 6px; }
+.barra { display: grid; grid-template-columns: minmax(0, 1fr) minmax(60px, 1.1fr) auto; gap: 10px; align-items: center; font-size: 0.86rem; text-align: left;
+  border: 0; background: transparent; padding: 3px 4px; border-radius: 6px; width: 100%; }
+button.barra { cursor: pointer; }
+button.barra:hover { background: var(--band); }
+button.barra[aria-current="true"] { background: var(--accent-soft); }
+.barra .et { min-width: 0; overflow-wrap: anywhere; }
+.barra .pista { height: 10px; position: relative; }
+.barra .relleno { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 0 4px 4px 0; min-width: 2px; }
+.barra .val { color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 0.82rem; }
+
+/* lista con mapa de calor */
+.calor-cont { overflow-x: auto; }
+.calor { min-width: 720px; display: grid; gap: 2px; }
+.calor .fila {
+  display: grid; grid-template-columns: minmax(220px, 1fr) repeat(var(--n), 22px) 170px 56px; gap: 2px 2px;
+  align-items: center; border: 0; background: transparent; padding: 2px 4px; border-radius: 6px; text-align: left; width: 100%;
+}
+.calor button.fila { cursor: pointer; }
+.calor button.fila:hover { background: var(--band); }
+.calor button.fila[aria-current="true"] { background: var(--accent-soft); }
+.calor .cab { font-size: 0.72rem; color: var(--muted); }
+.calor .cab span:not(:first-child) { text-align: center; }
+.calor .et { font-size: 0.88rem; padding-right: 10px; min-width: 0; overflow-wrap: anywhere; }
+.calor .celda { height: 18px; border-radius: 2px; background: var(--vacio); }
+.calor .min { font-family: var(--f-cond); font-size: 0.8rem; color: var(--ink-2); padding-left: 10px; min-width: 0; overflow-wrap: anywhere; }
+.calor .n { font-size: 0.8rem; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.s1 { background: var(--s1) !important; } .s2 { background: var(--s2) !important; } .s3 { background: var(--s3) !important; }
+.s4 { background: var(--s4) !important; } .s5 { background: var(--s5) !important; } .s6 { background: var(--s6) !important; }
+.s7 { background: var(--s7) !important; }
+.escala { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; font-size: 0.78rem; color: var(--ink-2); }
+.escala i { width: 14px; height: 12px; border-radius: 2px; display: inline-block; vertical-align: -1px; margin-right: 4px; }
+
+/* tópicos de cada ministerio (treemap) */
+.arbol { position: relative; width: 100%; }
+.arbol .blq { position: absolute; background: var(--surface); }
+.arbol .cab-min {
+  position: absolute; left: 0; right: 0; top: 0; height: 20px; padding: 0 4px; border: 0; background: transparent;
+  font-size: 0.75rem; font-weight: 600; color: var(--ink); text-align: left; cursor: zoom-in;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.arbol .cab-min span { color: var(--muted); font-weight: 400; }
+.arbol .cab-min:hover { color: var(--accent-ink); }
+.hoja {
+  position: absolute; background: var(--c); color: var(--tc); border-radius: 3px; overflow: hidden;
+  padding: 3px 5px; font-size: 11px; line-height: 1.2; cursor: pointer;
+}
+.hoja .h-et { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: break-word; hyphens: auto; }
+.hoja .h-v { display: block; margin-top: 2px; opacity: 0.85; font-variant-numeric: tabular-nums; }
+.hoja.autoridad { background: var(--surface); box-shadow: inset 0 0 0 2px var(--c); color: var(--ink); }
+.hoja:hover, .hoja.sel { outline: 2px solid var(--sel); outline-offset: -1px; z-index: 1; }
+.cuadro { width: 12px; height: 10px; border-radius: 2px; display: inline-block; flex: none; }
+.cuadro.borde { background: var(--surface); box-shadow: inset 0 0 0 2px var(--muted); }
+
+/* ministerios */
+.dos { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px; align-items: start; }
+@media (max-width: 920px) { .dos { grid-template-columns: minmax(0, 1fr); } }
+.perfil { display: grid; gap: 14px; }
+.perfil .resumen { color: var(--ink-2); }
+.boton { justify-self: start; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: 0.86rem; color: var(--accent-ink); }
+.boton:hover { background: var(--accent-soft); }
+.eventos { margin: 0; padding-left: 1.4em; font-size: 0.84rem; color: var(--ink-2); display: grid; gap: 2px; }
+
+/* método */
+.metodo { display: grid; gap: 10px; max-width: 80ch; color: var(--ink-2); }
+.metodo ul { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; }
+.metodo strong { color: var(--ink); font-weight: 500; }
+.pie { font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+
+/* tooltip */
+.tip { position: fixed; z-index: 20; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+  box-shadow: var(--sombra); border-radius: 8px; padding: 8px 10px; font-size: 0.82rem; max-width: 300px; display: grid; gap: 2px; }
+.tip strong { font-weight: 600; }
+.tip span { color: var(--ink-2); }
+.estado { padding: 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+
+/* texto explicativo */
+body { margin: 0; }
+[hidden] { display: none !important; }
+.capitulo { display: grid; gap: 24px; min-width: 0; scroll-margin-top: 16px; }
+.texto { max-width: 72ch; display: grid; gap: 14px; font-size: 1rem; line-height: 1.65; min-width: 0; }
+.texto h2 { font-size: 1.55rem; }
+.num-cap { color: var(--muted); font-weight: 500; margin-right: 0.45em; font-variant-numeric: tabular-nums; }
+.cita { color: var(--accent-ink); text-decoration: none; border-bottom: 1px solid var(--axis); }
+.cita:hover { border-bottom-color: currentColor; }
+.formula { font-size: 1.2rem; padding: 14px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; white-space: nowrap; }
+.aparte { font-size: 0.92rem; color: var(--ink-2); padding-left: 14px; border-left: 3px solid var(--line); }
+code { font-family: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace; font-size: 0.86em; background: var(--band); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.codigo { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; overflow-x: auto; font-size: 0.84rem; line-height: 1.6; }
+.codigo code { background: none; padding: 0; overflow-wrap: normal; }
+.lista { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; }
+.pasos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; counter-reset: paso; }
+.pasos li { counter-increment: paso; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; align-content: start; }
+.pasos li::before { content: counter(paso); font-size: 0.75rem; font-weight: 600; color: var(--accent-ink); background: var(--accent-soft); width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 4px; }
+.pasos span { font-size: 0.86rem; color: var(--ink-2); }
+.breve { display: grid; gap: 8px; max-width: 86ch; margin-top: 8px; }
+.breve ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.h-breve, .h-graf { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 500; }
+.h-graf { margin-bottom: 10px; }
+.toc ol { margin: 8px 0 0; padding-left: 1.6em; columns: 2 240px; column-gap: 32px; }
+.toc li { padding: 2px 0; break-inside: avoid; }
+.toc a { text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+.enlace { border: 0; background: none; padding: 0; color: var(--accent-ink); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; font: inherit; text-align: left; }
+.refs { margin: 0; padding-left: 1.4em; display: grid; gap: 12px; font-size: 0.92rem; line-height: 1.5; }
+.refs li { scroll-margin-top: 16px; overflow-wrap: anywhere; }
+.refs li:target { background: var(--accent-soft); border-radius: 6px; }
+.refs .aporte { display: block; color: var(--ink-2); font-size: 0.86rem; margin-top: 2px; }
+.calor.cob { min-width: 600px; }
+.calor.cob .fila { grid-template-columns: minmax(170px, 1fr) repeat(var(--n), 26px) 64px; }
+.sin-notas { font-size: 0.86rem; color: var(--ink-2); }
+</style>
+</head>
+<body>
+<main class="pagina" lang="es">
+  <header class="cabecera">
+    <p class="sobre">Prensa institucional · Ministerios de Chile · 2014–2026</p>
+    <h1>Tópicos de la prensa ministerial</h1>
+    <p class="bajada">Qué comunican los ministerios de Chile, cómo cambia su agenda con los años y dónde aparece la inteligencia artificial. Esta página explica paso a paso cómo se construyó un modelo de tópicos sobre su prensa, muestra los resultados para explorarlos y discute sus límites a la luz de la literatura.</p>
+    <dl class="cifras">
+      <div><dt>Notas</dt><dd class="num" id="c-notas">—</dd></div>
+      <div><dt>Ministerios</dt><dd class="num" id="c-min">—</dd></div>
+      <div><dt>Tópicos</dt><dd class="num" id="c-top">—</dd></div>
+      <div><dt>Notas sin tópico</dt><dd class="num" id="c-sin">—</dd></div>
+    </dl>
+    <div class="breve panel">
+      <h2 class="h-breve">En breve</h2>
+      <ul id="breve"></ul>
+    </div>
+    <nav class="toc" aria-label="Contenido">
+      <h2 class="h-breve">Contenido</h2>
+      <ol>
+        <li><a href="#corpus">La pregunta y los datos</a></li>
+        <li><a href="#modelo">Qué es un modelo de tópicos</a></li>
+        <li><a href="#embeddings">De textos a vectores</a></li>
+        <li><a href="#agrupar">Reducir y agrupar: UMAP y HDBSCAN</a></li>
+        <li><a href="#ctfidf">Nombrar los tópicos: c-TF-IDF</a></li>
+        <li><a href="#resultado">El mapa de los tópicos</a></li>
+        <li><a href="#tiempo-cap">El peso de cada tópico en el tiempo</a></li>
+        <li><a href="#autoridad">Cómo comunica cada ministerio</a></li>
+        <li><a href="#ia-cap">La inteligencia artificial</a></li>
+        <li><a href="#validez">Qué tan confiable es esto</a></li>
+        <li><a href="#reproducir">Cómo reproducirlo</a></li>
+        <li><a href="#referencias">Referencias</a></li>
+      </ol>
+    </nav>
+  </header>
+
+  <p class="estado" id="estado" hidden></p>
+
+  <section class="capitulo" id="corpus" aria-labelledby="h-corpus">
+    <div class="texto">
+      <h2 id="h-corpus"><span class="num-cap">1</span>La pregunta y los datos</h2>
+      <p>Este proyecto reúne la prensa institucional de los organismos obligados por la Ley de Transparencia para estudiar cómo el Estado de Chile comunica y promueve la inteligencia artificial, entendida en sentido amplio: también los algoritmos, la automatización y la transformación digital. El análisis parte por los ministerios: <b data-dato="notas_total">—</b> notas de prensa de <b data-dato="ministerios">—</b> ministerios y sus subsecretarías, publicadas en <b data-dato="fuentes">—</b> sitios web y extraídas con su texto completo. Antes de modelar se quitaron las notas repetidas (mismo título y fecha) y las de menos de 20 palabras.</p>
+      <p>En vez de buscar directamente las notas que hablan de IA, la pregunta de partida es más amplia: ¿de qué hablan los ministerios? Si la IA se volvió un tema propio de la comunicación del Estado, debería aparecer como un tópico entre muchos otros y ganar peso con los años. Dejar que los temas surjan de los textos antes de decidir qué medir es la forma de exploración que recomienda la literatura de «texto como datos» (<a class="cita" href="#ref-grimmer2013">Grimmer y Stewart, 2013</a>; <a class="cita" href="#ref-grimmer2022">Grimmer, Roberts y Stewart, 2022</a>), y los comunicados de prensa ya se han usado así para medir la agenda que expresan los actores políticos (<a class="cita" href="#ref-grimmer2010">Grimmer, 2010</a>).</p>
+      <p>Los archivos no cubren lo mismo. Muchos sitios conservan notas solo desde 2018, Seguridad Pública tiene notas desde 2025 y el archivo de Salud tiene muchas menos notas desde 2023. El gráfico muestra cuántas notas hay por ministerio y año; esa desigualdad obliga a las precauciones que se explican en la sección 7.</p>
+    </div>
+    <div class="panel">
+      <h3 class="h-graf">Notas por ministerio y año</h3>
+      <div class="calor-cont"><div class="calor cob" id="cobertura"></div></div>
+      <div class="escala" id="escala-cob" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <section class="capitulo" id="modelo" aria-labelledby="h-modelo">
+    <div class="texto">
+      <h2 id="h-modelo"><span class="num-cap">2</span>Qué es un modelo de tópicos</h2>
+      <p>Un modelo de tópicos agrupa documentos que hablan de lo mismo sin que nadie defina antes los temas. El modelo clásico, LDA (<a class="cita" href="#ref-blei2003">Blei, Ng y Jordan, 2003</a>), supone que cada documento es una mezcla de tópicos y cada tópico, una distribución de probabilidad sobre las palabras. Sus extensiones permiten que el peso de los tópicos dependa de variables como la fecha o el autor (<a class="cita" href="#ref-roberts2014">Roberts et al., 2014</a>) o que las palabras de cada tópico cambien con el tiempo (<a class="cita" href="#ref-blei2006">Blei y Lafferty, 2006</a>). En sociología se han leído como una forma de describir a gran escala los marcos con que se habla de un tema (<a class="cita" href="#ref-dimaggio2013">DiMaggio, Nag y Blei, 2013</a>).</p>
+      <p>Aquí se usa BERTopic (<a class="cita" href="#ref-grootendorst2022">Grootendorst, 2022</a>), que sigue otro camino: primero representa cada nota con un vector que resume su significado, después agrupa los vectores parecidos y solo al final busca las palabras que distinguen a cada grupo. Funciona bien con textos cortos y en castellano; en una comparación con publicaciones de Twitter, BERTopic y NMF dieron tópicos más claros que LDA (<a class="cita" href="#ref-egger2022">Egger y Yu, 2022</a>), aunque las notas de prensa son textos más largos. A cambio, asigna un solo tópico a cada nota y depende de varias decisiones que conviene hacer explícitas. El proceso tiene seis pasos:</p>
+    </div>
+    <ol class="pasos" aria-label="Pasos del modelo">
+      <li><b>Texto</b><span>Título y primeras 100 palabras de cada nota</span></li>
+      <li><b>Vector</b><span>384 números por nota con un modelo de lenguaje multilingüe</span></li>
+      <li><b>UMAP</b><span>De 384 a 5 dimensiones, conservando qué notas son vecinas</span></li>
+      <li><b>HDBSCAN</b><span>Grupos densos de al menos 40 notas; el resto queda como ruido</span></li>
+      <li><b>c-TF-IDF</b><span>Las palabras que distinguen a cada grupo de los demás</span></li>
+      <li><b>Series</b><span>Peso de cada tópico por año y por ministerio</span></li>
+    </ol>
+  </section>
+
+  <section class="capitulo" id="embeddings" aria-labelledby="h-emb">
+    <div class="texto">
+      <h2 id="h-emb"><span class="num-cap">3</span>De textos a vectores</h2>
+      <p>Un <i>embedding</i> de oraciones es una lista de números construida de modo que textos con significado parecido queden cerca, aunque no compartan palabras: «subsidio para pagar la luz» y «rebaja en la cuenta de electricidad» terminan en puntos vecinos. Sentence-BERT adapta un modelo de lenguaje del tipo BERT para producir estos vectores de forma rápida (<a class="cita" href="#ref-reimers2019">Reimers y Gurevych, 2019</a>), y su versión multilingüe se entrena para que frases equivalentes en distintos idiomas, incluido el castellano, caigan en el mismo lugar (<a class="cita" href="#ref-reimers2020">Reimers y Gurevych, 2020</a>).</p>
+      <p>El modelo usado, <code>paraphrase-multilingual-MiniLM-L12-v2</code>, es pequeño: corre en un computador sin tarjeta gráfica y entrega 384 números por texto. Solo lee las primeras 128 piezas de palabra, unas 100 palabras, así que cada nota se representa con su título y su primer párrafo, que en una nota de prensa suelen concentrar el tema. Calcular los vectores de todas las notas tomó unos 50 minutos.</p>
+    </div>
+  </section>
+
+  <section class="capitulo" id="agrupar" aria-labelledby="h-agrupar">
+    <div class="texto">
+      <h2 id="h-agrupar"><span class="num-cap">4</span>Reducir y agrupar: UMAP y HDBSCAN</h2>
+      <p>Agrupar directamente en 384 dimensiones funciona mal: en espacios tan grandes las distancias entre puntos tienden a parecerse y cuesta distinguir zonas densas. Por eso BERTopic reduce primero las dimensiones con UMAP (<a class="cita" href="#ref-mcinnes2018">McInnes, Healy y Melville, 2018</a>), un método que conserva la estructura de vecindad: las notas que eran vecinas en 384 dimensiones siguen siéndolo en 5. Se usaron 15 vecinos, distancia coseno y una distancia mínima de cero, que deja los grupos compactos.</p>
+      <p>Después, HDBSCAN busca zonas densas en ese espacio (<a class="cita" href="#ref-campello2013">Campello, Moulavi y Sander, 2013</a>; <a class="cita" href="#ref-mcinnes2017">McInnes, Healy y Astels, 2017</a>). A diferencia de k-medias, no hay que fijar cuántos grupos habrá ni obliga a meter cada nota en uno: las que quedan en zonas poco densas se marcan como ruido. Los parámetros son el tamaño mínimo de un tópico (40 notas) y cuán exigente es el algoritmo para considerar densa una zona (10 vecinos).</p>
+      <p>Una decisión cambió bastante los resultados. HDBSCAN construye una jerarquía de grupos y puede quedarse con los más estables (la opción por defecto, <i>eom</i>) o con las hojas de esa jerarquía (<i>leaf</i>), una opción de la librería <code>hdbscan</code> (<a class="cita" href="#ref-mcinnes2017">McInnes, Healy y Astels, 2017</a>). Con la primera, ministerios como Culturas o Deporte caían casi enteros en un solo tópico, porque todas sus notas se parecen entre sí más que a las de otros ministerios. Con las hojas los tópicos son más finos y temáticos.</p>
+      <p><b>Notas sin tópico.</b> HDBSCAN dejó como ruido el <b data-dato="sin_hdbscan">—</b> de las notas. Para recuperar las que sí se parecen a algún tópico, cada una se compara con el centro de cada tópico (similitud coseno) y se asigna al más parecido solo si se parece a él al menos tanto como las notas propias del tópico, medido con el percentil 25 de sus similitudes. Quedan sin tópico el <b data-dato="sin_topico">—</b> de las notas de 2014–2026: notas genéricas o de temas demasiado pequeños para formar un grupo.</p>
+    </div>
+  </section>
+
+  <section class="capitulo" id="ctfidf" aria-labelledby="h-ctfidf">
+    <div class="texto">
+      <h2 id="h-ctfidf"><span class="num-cap">5</span>Nombrar los tópicos: c-TF-IDF</h2>
+      <p>Un grupo de notas no dice de qué trata. BERTopic lo nombra con una variante de TF-IDF que trata cada tópico como si fuera un solo documento grande (<a class="cita" href="#ref-grootendorst2022">Grootendorst, 2022</a>). El peso de una palabra <var>t</var> en el tópico <var>c</var> es</p>
+      <p class="formula" role="math" aria-label="W sub t c igual a tf sub t c por logaritmo de 1 más A sobre f sub t">W<sub>t,c</sub> = tf<sub>t,c</sub> × log(1 + A / f<sub>t</sub>)</p>
+      <p>donde tf<sub>t,c</sub> es cuántas veces aparece la palabra en las notas del tópico, f<sub>t</sub> cuántas veces aparece en todo el corpus y A el promedio de palabras por tópico. Una palabra pesa mucho si es frecuente en el tópico y rara en el resto. Además, la frecuencia dentro del tópico se suaviza con una raíz cuadrada para que las palabras muy repetidas no dominen. Para contar se usan las primeras 600 palabras de cada nota.</p>
+      <p>Antes de contar se sacan las palabras vacías: las listas del castellano de NLTK y Snowball, los meses y los días, los verbos de cita propios de la prensa («señaló», «destacó», «agregó») y las palabras que aparecen en más de una de cada cuatro notas, como «gobierno», «ministro» o «región», que no distinguen ningún tema. Se cuentan palabras sueltas y pares de palabras («pequeña minería», «transformación digital») presentes en al menos 10 notas. Cada tópico se nombra con sus primeras palabras clave; no son títulos puestos a mano.</p>
+      <p class="aparte">Un detalle técnico que conviene saber: con la configuración por defecto, pensada para el inglés, BERTopic borra los caracteres que no son ASCII antes de contar, y «educación» pasaba a ser «educacin». Se usó la configuración multilingüe.</p>
+    </div>
+  </section>
+
+  <section class="capitulo" id="resultado" aria-labelledby="h-resultado">
+    <div class="texto">
+      <h2 id="h-resultado"><span class="num-cap">6</span>El mapa de los tópicos</h2>
+      <p>El resultado son <b data-dato="topicos">—</b> tópicos. En el mapa, cada uno se ubica según el centro de sus notas, proyectado a dos dimensiones con UMAP: la cercanía indica parecido, pero las distancias son aproximadas y los ejes no tienen unidades. Al elegir un tópico se abre su ficha, con sus palabras clave, su peso año a año y los ministerios que publican en él.</p>
+    </div>
+
+    <section class="bloque" id="explorar" aria-labelledby="t-explorar">
+      <header>
+        <h3 id="t-explorar">Mapa de tópicos</h3>
+        <p>Cada círculo es un tópico; el tamaño indica cuántas notas tiene y el color, cuánto cambió su peso entre 2018–2022 y 2023–2026. Haz clic en un tópico para ver su ficha.</p>
+      </header>
+      <div class="controles">
+        <label class="campo" for="buscar">Buscar palabra clave
+          <input id="buscar" type="search" placeholder="p. ej. litio, vacunación, datos" autocomplete="off">
+        </label>
+        <label class="campo" for="f-min">Ministerio
+          <select id="f-min"><option value="">Todos los ministerios</option></select>
+        </label>
+        <div class="campo">Tipo de tópico
+          <div class="seg" role="group" aria-label="Tipo de tópico" id="f-tipo">
+            <button type="button" data-tipo="todos" aria-pressed="true">Todos</button>
+            <button type="button" data-tipo="tema" aria-pressed="false">Temas</button>
+            <button type="button" data-tipo="autoridad" aria-pressed="false">Agenda de autoridad</button>
+          </div>
+        </div>
+        <p class="conteo" id="conteo" aria-live="polite"></p>
+      </div>
+      <div class="explorador">
+        <div class="panel mapa-panel">
+          <svg id="mapa" role="img" aria-label="Mapa de tópicos: cada círculo es un tópico, ubicado según su parecido con los demás"></svg>
+          <div class="leyenda" id="leyenda-mapa"></div>
+          <p class="nota-graf" id="nota-mapa">El tamaño es proporcional a la raíz del número de notas. Con un ministerio elegido, el tamaño cuenta solo sus notas.</p>
+        </div>
+        <article class="panel ficha" id="ficha" aria-live="polite"></article>
+      </div>
+    </section>
+
+    <section class="bloque" id="composicion" aria-labelledby="t-comp">
+      <header>
+        <h3 id="t-comp">Todos los tópicos, por ministerio</h3>
+        <p>La misma información como mapa de árbol. Cada recuadro es un tópico y su área es proporcional a sus notas en el período elegido; los tópicos se agrupan bajo el ministerio que más publica sobre ellos. Cambia el período para ver qué tópicos desaparecen y cuáles aparecen, haz clic en el nombre de un ministerio para ampliar su bloque o en un tópico para abrir su ficha.</p>
+      </header>
+      <div class="controles">
+        <div class="campo">Período
+          <div class="seg" role="group" aria-label="Período" id="f-periodo">
+            <button type="button" data-periodo="1" aria-pressed="true">2014–2026</button>
+            <button type="button" data-periodo="2" aria-pressed="false">2018–2022</button>
+            <button type="button" data-periodo="3" aria-pressed="false">2023–2026</button>
+          </div>
+        </div>
+        <label class="campo" for="f-arbol">Ver
+          <select id="f-arbol"><option value="">Todos los ministerios</option></select>
+        </label>
+      </div>
+      <div class="panel" style="display:grid;gap:12px">
+        <div class="arbol" id="arbol" role="img" aria-label="Todos los tópicos agrupados por ministerio principal; el área de cada recuadro es proporcional a sus notas"></div>
+        <div class="leyenda" id="leyenda-arbol"></div>
+        <p class="nota-graf" id="nota-arbol"></p>
+      </div>
+    </section>
+  </section>
+
+  <section class="capitulo" id="tiempo-cap" aria-labelledby="h-tiempo">
+    <div class="texto">
+      <h2 id="h-tiempo"><span class="num-cap">7</span>El peso de cada tópico en el tiempo</h2>
+      <p>Para comparar años con distinta cantidad de notas, el peso de un tópico se mide en notas por cada mil notas ministeriales del año. Es la misma lógica de los estudios de atención política, que siguen qué proporción de los discursos dedica cada actor a cada tema para ver cómo se mueve la agenda (<a class="cita" href="#ref-quinn2010">Quinn et al., 2010</a>). Con una idea parecida, <a class="cita" href="#ref-greene2017">Greene y Cross (2017)</a> siguieron la agenda del Parlamento Europeo entre 1999 y 2014 y mostraron cómo la atención responde a shocks externos; en estos datos, la pandemia cumple ese papel.</p>
+      <p>Esa cifra mezcla dos cosas: cuánto habla cada ministerio de un tema y cuántas notas publica cada ministerio, que a su vez depende de qué tan completo es su archivo. Por eso se calcula también una versión en que cada ministerio pesa igual: el promedio, entre los ministerios con notas ese año, de la fracción de sus notas que cae en el tópico. Si un tópico crece en las dos versiones, el cambio no se explica solo porque entraron o salieron fuentes.</p>
+      <p>Para decir si un tópico crece se compara su promedio anual de 2023–2026 con el de 2018–2022, el primer período en que casi todos los ministerios tienen archivo. A los dos promedios se les suma 0,5 antes de dividir, para que un tópico que pasa de 0,1 a 0,4 por mil no aparezca como si se hubiera cuadruplicado. Con esa razón se colorean los gráficos: <i>se duplica o más</i> (2 o más), <i>crece</i> (entre 1,32 y 2), <i>estable</i> (entre 0,76 y 1,32), <i>cae</i> (entre 0,5 y 0,76) y <i>cae a menos de la mitad</i>. Otra opción habría sido un modelo dinámico, en que las palabras de cada tópico cambian año a año (<a class="cita" href="#ref-blei2006">Blei y Lafferty, 2006</a>); aquí los tópicos son fijos y lo que cambia es su peso.</p>
+    </div>
+    <section class="bloque" id="tiempo" aria-labelledby="t-tiempo">
+      <header>
+        <h3 id="t-tiempo">Qué aparece y qué desaparece</h3>
+        <p>Peso de cada tópico año a año, en notas por cada mil notas ministeriales del año. Las listas dejan fuera los tópicos centrados en una autoridad. Haz clic en una fila para abrir su ficha.</p>
+      </header>
+      <div class="controles">
+        <div class="seg" role="group" aria-label="Lista de tópicos" id="f-lista">
+          <button type="button" data-lista="crecen" aria-pressed="true">Los que más crecen</button>
+          <button type="button" data-lista="caen" aria-pressed="false">Los que más caen</button>
+          <button type="button" data-lista="ia" aria-pressed="false">IA y transformación digital</button>
+          <button type="button" data-lista="todos" aria-pressed="false">Todos los tópicos</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="calor-cont"><div class="calor" id="calor"></div></div>
+        <div class="escala" id="escala" style="margin-top:12px"></div>
+      </div>
+    </section>
+  </section>
+
+  <section class="capitulo" id="autoridad" aria-labelledby="h-autoridad">
+    <div class="texto">
+      <h2 id="h-autoridad"><span class="num-cap">8</span>Cómo comunica cada ministerio</h2>
+      <p>Al leer los tópicos aparece un patrón: algunos se encabezan con el apellido de un ministro y agrupan su agenda (reuniones, visitas, viajes, entrevistas) sin un tema de política detrás. La literatura de comunicación política llama personalización a este desplazamiento del foco desde las instituciones y las políticas hacia las personas que las encabezan (<a class="cita" href="#ref-rahat2007">Rahat y Sheafer, 2007</a>; <a class="cita" href="#ref-vanaelst2012">Van Aelst, Sheafer y Stanyer, 2012</a>). Rahat y Sheafer distinguen la personalización de las instituciones, la de los medios y la del comportamiento de los propios políticos; lo que se mide aquí se acerca a la última, porque es el ministerio el que pone a su autoridad al centro de lo que comunica. Cuando ese foco se concentra en el Presidente y unos pocos líderes se habla de personalización centralizada (<a class="cita" href="#ref-balmas2014">Balmas et al., 2014</a>). En Chile, la personalización se ha estudiado sobre todo en la cobertura de prensa de las campañas presidenciales (<a class="cita" href="#ref-porath2014">Porath, Suzuki y Ramdohr, 2014</a>), más que en la comunicación de los propios ministerios.</p>
+      <p>La medida usada es simple: un tópico es de agenda de autoridad cuando su primera palabra clave, o dos de las cuatro primeras, contienen el apellido de un ministro o ministra de 2006–2026, de un presidente o de un subsecretario. La lista se revisó a mano para descartar apellidos que también son palabras comunes o nombres de otra cosa, como Mesa, Ríos o Iglesias. Con esta regla, <b data-dato="autoridad">—</b> de los <b data-dato="topicos">—</b> tópicos son de agenda de autoridad. Es una medida gruesa: no capta las notas centradas en la autoridad que caen en tópicos temáticos, pero basta para mostrar estilos de comunicación muy distintos entre ministerios. Tampoco equivale a una «campaña permanente»: comunicar la agenda de una autoridad es parte de gobernar, que tiene otros plazos y otra lógica que una campaña (<a class="cita" href="#ref-rispolo2020">Ríspolo, 2020</a>).</p>
+    </div>
+    <section class="bloque" id="ministerios" aria-labelledby="t-min">
+      <header>
+        <h3 id="t-min">Agenda de autoridad y perfil de cada ministerio</h3>
+        <p>La barra muestra la parte de las notas de cada ministerio que cae en tópicos de agenda de autoridad. Elige un ministerio para ver cuántas notas tiene por año y sus tópicos principales.</p>
+      </header>
+      <div class="dos">
+        <div class="panel">
+          <h4 style="margin-bottom:10px">Notas en tópicos de agenda de autoridad, 2014–2026</h4>
+          <div class="barras" id="barras-min"></div>
+        </div>
+        <article class="panel perfil" id="perfil" aria-live="polite"></article>
+      </div>
+    </section>
+  </section>
+
+  <section class="capitulo" id="ia-cap" aria-labelledby="h-ia">
+    <div class="texto">
+      <h2 id="h-ia"><span class="num-cap">9</span>La inteligencia artificial</h2>
+      <p>Para seguir la IA se usó, además del modelo, un diccionario: una nota la nombra si menciona inteligencia artificial, la sigla IA, <i>machine learning</i>, <i>deep learning</i>, redes neuronales, ChatGPT, chatbots, aprendizaje automático o modelos de lenguaje. Los diccionarios son transparentes pero frágiles (<a class="cita" href="#ref-grimmer2013">Grimmer y Stewart, 2013</a>): la sigla IA también aparece en iniciales y siglas de otras cosas, así que solo se cuenta en mayúsculas y sin puntos.</p>
+      <p>Comparar las dos medidas es lo más interesante. El modelo encuentra, sin que nadie se lo pida, un tópico propio de inteligencia artificial, pero la mayoría de las notas que nombran la IA están en otros tópicos: la IA es un tema en sí mismo para un núcleo pequeño de notas, sobre todo del Ministerio de Ciencia, y una referencia dentro de las agendas de ciencia, cancillería, educación o defensa. Los estudios sobre estrategias nacionales de IA muestran que el Estado se asigna a la vez el papel de promotor y el de regulador de la tecnología (<a class="cita" href="#ref-papyshev2023">Papyshev y Yarime, 2023</a>; <a class="cita" href="#ref-ulnicane2021">Ulnicane et al., 2021</a>), y que esos planes combinan la modernización del sector público con la gobernanza de datos y algoritmos (<a class="cita" href="#ref-fatima2020">Fatima, Desouza y Dawson, 2020</a>). Una tipología de los usos de la IA en el sector público (<a class="cita" href="#ref-wirtz2019">Wirtz, Weyerer y Geyer, 2019</a>) serviría como siguiente paso para clasificar qué usos promueve cada ministerio. En la prensa, la IA se ha encuadrado sobre todo desde los negocios y la tecnología, con más beneficios que riesgos (<a class="cita" href="#ref-chuan2019">Chuan, Tsai y Cho, 2019</a>); en medios de Costa Rica el encuadre pasó de explicar la tecnología a discutir sus impactos y su ética (<a class="cita" href="#ref-tristan2026">Tristán Jiménez y Lizano Quirós, 2026</a>), y en la prensa comercial chilena un estudio reciente revisa más de doce mil noticias sobre IA (<a class="cita" href="#ref-humeres2026">Humeres et al., 2026</a>). Este análisis agrega a esa discusión la voz del propio Estado.</p>
+    </div>
+    <section class="bloque" id="ia" aria-labelledby="t-ia">
+      <header>
+        <h3 id="t-ia">Dónde aparece la inteligencia artificial</h3>
+        <p>Notas ministeriales que nombran la IA, en qué tópicos caen y qué ministerios las publican. Los números marcan hitos de la política digital y de IA en Chile.</p>
+      </header>
+      <div class="dos">
+        <div class="panel" style="display:grid;gap:10px">
+          <h4>Notas que nombran la IA, por cada mil notas del año</h4>
+          <div id="ia-linea"></div>
+          <ol class="eventos" id="ia-eventos"></ol>
+        </div>
+        <div class="panel" style="display:grid;gap:18px">
+          <div style="display:grid;gap:10px">
+            <h4>En qué tópicos caen esas notas</h4>
+            <div class="barras" id="ia-topicos"></div>
+          </div>
+          <div style="display:grid;gap:10px">
+            <h4>Qué ministerios las publican</h4>
+            <div class="barras" id="ia-min"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <section class="capitulo" id="validez" aria-labelledby="h-validez">
+    <div class="texto">
+      <h2 id="h-validez"><span class="num-cap">10</span>Qué tan confiable es esto</h2>
+      <p>Un modelo de tópicos es una herramienta de lectura, no una medida terminada. La regla que resume la literatura es validar siempre (<a class="cita" href="#ref-grimmer2013">Grimmer y Stewart, 2013</a>): las palabras clave no bastan para saber qué captura un tópico, las personas interpretan unos tópicos mucho mejor que otros (<a class="cita" href="#ref-chang2009">Chang et al., 2009</a>) y antes de usar un tópico como medida de un concepto conviene comprobar, leyendo notas, que de verdad corresponde a ese concepto (<a class="cita" href="#ref-ying2022">Ying, Montgomery y Stewart, 2022</a>). Por eso cada ficha muestra notas de ejemplo en la versión local del explorador. Las advertencias principales:</p>
+      <ul class="lista">
+        <li><b>Una sola etiqueta por nota.</b> Una nota sobre IA en la educación cae en un solo tópico, aunque toque dos temas.</li>
+        <li><b>Parámetros y azar.</b> Con otro tamaño mínimo de tópico habría más o menos tópicos, y UMAP depende de una semilla aleatoria (fijada en 42 para poder repetir el resultado). Los patrones gruesos, como el tópico de IA o la caída de los tópicos de la pandemia, deberían mantenerse; los tópicos pequeños pueden cambiar.</li>
+        <li><b>Archivos desiguales.</b> No todos los ministerios tienen notas desde 2014 (sección 1), y 2026 llega hasta noviembre.</li>
+        <li><b>Etiquetas automáticas.</b> Los nombres son las primeras palabras clave; hay que leer las notas antes de interpretar un tópico.</li>
+        <li><b>Prensa no es política.</b> Lo que un ministerio publica es lo que decide comunicar, no todo lo que hace.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="capitulo" id="reproducir" aria-labelledby="h-reproducir">
+    <div class="texto">
+      <h2 id="h-reproducir"><span class="num-cap">11</span>Cómo reproducirlo</h2>
+      <p>Todo el análisis está en <code>analisis/topicos_ministerios.py</code>, que se corre por etapas. Cada una guarda su resultado en <code>data/topicos_ministerios/</code>, una carpeta que no se publica porque contiene el texto de las notas.</p>
+      <pre class="codigo"><code>python analisis/topicos_ministerios.py preparar     # junta las notas y quita duplicados
+python analisis/topicos_ministerios.py embeber      # vectores de cada nota (unos 50 minutos)
+python analisis/topicos_ministerios.py modelar      # UMAP + HDBSCAN + c-TF-IDF
+python analisis/topicos_ministerios.py analizar     # tablas por año y por ministerio
+python analisis/topicos_ministerios.py figuras      # figuras estáticas del README
+python analisis/topicos_ministerios.py explorador   # esta página y su versión local</code></pre>
+      <p>La etapa <code>explorador</code> escribe dos versiones de esta página. La del repositorio (<code>docs/</code>) usa solo resultados agregados: palabras clave, series por año y conteos por ministerio. La versión local (<code>data/topicos_ministerios/explorador/index.html</code>) incluye además notas de ejemplo de cada tópico, con su título y su enlace.</p>
+    </div>
+  </section>
+
+  <section class="capitulo" id="referencias" aria-labelledby="h-referencias">
+    <div class="texto">
+      <h2 id="h-referencias">Referencias</h2>
+      <ol class="refs" id="lista-refs">
+        <li id="ref-balmas2014">Balmas, M., Rahat, G., Sheafer, T., y Shenhav, S. R. (2014). Two routes to personalized politics: Centralized and decentralized personalization. <i>Party Politics, 20</i>(1), 37–51. <a href="https://doi.org/10.1177/1354068811436037" target="_blank" rel="noopener">doi.org/10.1177/1354068811436037</a><span class="aporte">Distingue la personalización centralizada, en pocos líderes, de la descentralizada.</span></li>
+        <li id="ref-blei2006">Blei, D. M., y Lafferty, J. D. (2006). Dynamic topic models. En <i>Proceedings of the 23rd International Conference on Machine Learning</i> (pp. 113–120). ACM. <a href="https://doi.org/10.1145/1143844.1143859" target="_blank" rel="noopener">doi.org/10.1145/1143844.1143859</a><span class="aporte">Tópicos cuyo vocabulario cambia en el tiempo; la alternativa a medir solo el peso de tópicos fijos.</span></li>
+        <li id="ref-blei2003">Blei, D. M., Ng, A. Y., y Jordan, M. I. (2003). Latent Dirichlet allocation. <i>Journal of Machine Learning Research, 3</i>, 993–1022. <a href="https://www.jmlr.org/papers/v3/blei03a.html" target="_blank" rel="noopener">www.jmlr.org/papers/v3/blei03a.html</a><span class="aporte">El modelo de tópicos clásico: cada documento es una mezcla de tópicos.</span></li>
+        <li id="ref-campello2013">Campello, R. J. G. B., Moulavi, D., y Sander, J. (2013). Density-based clustering based on hierarchical density estimates. En J. Pei et al. (Eds.), <i>Advances in Knowledge Discovery and Data Mining: PAKDD 2013</i> (Lecture Notes in Computer Science, vol. 7819, pp. 160–172). Springer. <a href="https://doi.org/10.1007/978-3-642-37456-2_14" target="_blank" rel="noopener">doi.org/10.1007/978-3-642-37456-2_14</a><span class="aporte">Define HDBSCAN: grupos por densidad y notas sin grupo como ruido.</span></li>
+        <li id="ref-chang2009">Chang, J., Gerrish, S., Wang, C., Boyd-Graber, J., y Blei, D. M. (2009). Reading tea leaves: How humans interpret topic models. En <i>Advances in Neural Information Processing Systems 22</i> (NIPS 2009). Curran Associates. <a href="https://papers.nips.cc/paper/2009/hash/f92586a25bb3145facd64ab20fd554ff-Abstract.html" target="_blank" rel="noopener">papers.nips.cc/paper/2009/hash/f92586a25bb3145facd64ab20fd554ff-Abstract.html</a><span class="aporte">Pruebas con personas que muestran que el mejor ajuste estadístico no garantiza tópicos interpretables.</span></li>
+        <li id="ref-chuan2019">Chuan, C.-H., Tsai, W.-H. S., y Cho, S. Y. (2019). Framing artificial intelligence in American newspapers. En <i>Proceedings of the 2019 AAAI/ACM Conference on AI, Ethics, and Society</i> (pp. 339–344). ACM. <a href="https://doi.org/10.1145/3306618.3314285" target="_blank" rel="noopener">doi.org/10.1145/3306618.3314285</a><span class="aporte">Cinco diarios de EE. UU., 2009–2018: predominan los negocios y la tecnología, y los beneficios sobre los riesgos.</span></li>
+        <li id="ref-dimaggio2013">DiMaggio, P., Nag, M., y Blei, D. (2013). Exploiting affinities between topic modeling and the sociological perspective on culture: Application to newspaper coverage of U.S. government arts funding. <i>Poetics, 41</i>(6), 570–606. <a href="https://doi.org/10.1016/j.poetic.2013.08.004" target="_blank" rel="noopener">doi.org/10.1016/j.poetic.2013.08.004</a><span class="aporte">Lee los tópicos como marcos culturales en la cobertura de una política pública y propone validarlos desde varios ángulos.</span></li>
+        <li id="ref-egger2022">Egger, R., y Yu, J. (2022). A topic modeling comparison between LDA, NMF, Top2Vec, and BERTopic to demystify Twitter posts. <i>Frontiers in Sociology, 7</i>, 886498. <a href="https://doi.org/10.3389/fsoc.2022.886498" target="_blank" rel="noopener">doi.org/10.3389/fsoc.2022.886498</a><span class="aporte">Compara cuatro técnicas con textos cortos de redes sociales.</span></li>
+        <li id="ref-fatima2020">Fatima, S., Desouza, K. C., y Dawson, G. S. (2020). National strategic artificial intelligence plans: A multi-dimensional analysis. <i>Economic Analysis and Policy, 67</i>, 178–194. <a href="https://doi.org/10.1016/j.eap.2020.07.008" target="_blank" rel="noopener">doi.org/10.1016/j.eap.2020.07.008</a><span class="aporte">Analiza 34 planes nacionales de IA: modernización del sector público, datos y algoritmos, gobernanza y capacidades.</span></li>
+        <li id="ref-greene2017">Greene, D., y Cross, J. P. (2017). Exploring the political agenda of the European Parliament using a dynamic topic modeling approach. <i>Political Analysis, 25</i>(1), 77–94. <a href="https://doi.org/10.1017/pan.2016.7" target="_blank" rel="noopener">doi.org/10.1017/pan.2016.7</a><span class="aporte">Sigue la agenda parlamentaria en el tiempo y su respuesta a shocks externos.</span></li>
+        <li id="ref-grimmer2010">Grimmer, J. (2010). A Bayesian hierarchical topic model for political texts: Measuring expressed agendas in Senate press releases. <i>Political Analysis, 18</i>(1), 1–35. <a href="https://doi.org/10.1093/pan/mpp034" target="_blank" rel="noopener">doi.org/10.1093/pan/mpp034</a><span class="aporte">Mide la agenda que expresan los senadores en más de 24 mil comunicados de prensa; el antecedente más directo de este análisis.</span></li>
+        <li id="ref-grimmer2022">Grimmer, J., Roberts, M. E., y Stewart, B. M. (2022). <i>Text as data: A new framework for machine learning and the social sciences</i>. Princeton University Press. <a href="https://press.princeton.edu/books/paperback/9780691207551/text-as-data" target="_blank" rel="noopener">press.princeton.edu/books/paperback/9780691207551/text-as-data</a><span class="aporte">Manual de referencia: usar los tópicos para descubrir es distinto de usarlos para medir.</span></li>
+        <li id="ref-grimmer2013">Grimmer, J., y Stewart, B. M. (2013). Text as data: The promise and pitfalls of automatic content analysis methods for political texts. <i>Political Analysis, 21</i>(3), 267–297. <a href="https://doi.org/10.1093/pan/mps028" target="_blank" rel="noopener">doi.org/10.1093/pan/mps028</a><span class="aporte">Los modelos de texto son incorrectos pero útiles, y hay que validarlos siempre.</span></li>
+        <li id="ref-grootendorst2022">Grootendorst, M. (2022). <i>BERTopic: Neural topic modeling with a class-based TF-IDF procedure</i> (arXiv:2203.05794). arXiv. <a href="https://doi.org/10.48550/arXiv.2203.05794" target="_blank" rel="noopener">doi.org/10.48550/arXiv.2203.05794</a><span class="aporte">Describe el método usado: embeddings, UMAP, HDBSCAN y c-TF-IDF. Es un preprint.</span></li>
+        <li id="ref-humeres2026">Humeres, M., Vega-Poblete, J., Brossi, L., y Valderrama Barragán, M. P. (2026). Inteligencia artificial y género en la prensa chilena. Autoridad epistémica y lenguaje del prestigio. <i>Revista Iberoamericana de Ciencia, Tecnología y Sociedad – CTS, 21</i>(62), 127–155. <a href="https://doi.org/10.35362/issn.1850-0013-1225" target="_blank" rel="noopener">doi.org/10.35362/issn.1850-0013-1225</a><span class="aporte">12.531 noticias sobre IA en cuatro diarios chilenos, 2020–2025; el contrapunto de la prensa comercial.</span></li>
+        <li id="ref-ley21180">Ley N.º 21.180, sobre Transformación Digital del Estado. Ministerio Secretaría General de la Presidencia. <i>Diario Oficial</i>, 11 de noviembre de 2019. <a href="https://www.bcn.cl/leychile/navegar?idNorma=1138479" target="_blank" rel="noopener">www.bcn.cl/leychile/navegar?idNorma=1138479</a><span class="aporte">Promulgada el 25 de octubre de 2019.</span></li>
+        <li id="ref-mcinnes2017">McInnes, L., Healy, J., y Astels, S. (2017). hdbscan: Hierarchical density based clustering. <i>Journal of Open Source Software, 2</i>(11), 205. <a href="https://doi.org/10.21105/joss.00205" target="_blank" rel="noopener">doi.org/10.21105/joss.00205</a><span class="aporte">La implementación de HDBSCAN que usa BERTopic, incluida la selección de grupos por hojas.</span></li>
+        <li id="ref-mcinnes2018">McInnes, L., Healy, J., y Melville, J. (2018). <i>UMAP: Uniform manifold approximation and projection for dimension reduction</i> (arXiv:1802.03426). arXiv. <a href="https://doi.org/10.48550/arXiv.1802.03426" target="_blank" rel="noopener">doi.org/10.48550/arXiv.1802.03426</a><span class="aporte">Reducción de dimensiones que conserva la estructura de vecindad.</span></li>
+        <li id="ref-pnia2021">Ministerio de Ciencia, Tecnología, Conocimiento e Innovación. (2021). <i>Política Nacional de Inteligencia Artificial</i>. Aprobada por el Decreto N.º 20, de 20 de septiembre de 2021 (<i>Diario Oficial</i>, 3 de diciembre de 2021). <a href="https://www.bcn.cl/leychile/navegar?idNorma=1169399" target="_blank" rel="noopener">www.bcn.cl/leychile/navegar?idNorma=1169399</a><span class="aporte">Reemplazada por la actualización de 2024.</span></li>
+        <li id="ref-pnia2024">Ministerio de Ciencia, Tecnología, Conocimiento e Innovación. Decreto N.º 12, de 11 de abril de 2024, que aprueba la actualización de la Política Nacional de Inteligencia Artificial (<i>Diario Oficial</i>, 28 de enero de 2025). <a href="https://www.bcn.cl/leychile/navegar?idNorma=1210664" target="_blank" rel="noopener">www.bcn.cl/leychile/navegar?idNorma=1210664</a></li>
+        <li id="ref-papyshev2023">Papyshev, G., y Yarime, M. (2023). The state’s role in governing artificial intelligence: Development, control, and promotion through national strategies. <i>Policy Design and Practice, 6</i>(1), 79–102. <a href="https://doi.org/10.1080/25741292.2022.2162252" target="_blank" rel="noopener">doi.org/10.1080/25741292.2022.2162252</a><span class="aporte">Combina LDA y lectura de 31 estrategias nacionales: el Estado desarrolla, controla y promueve la IA.</span></li>
+        <li id="ref-porath2014">Porath, W., Suzuki, J.-J., y Ramdohr, T.-M. (2014). Personalization, privatization, and campaign strategies in newspaper coverage of two Chilean presidential elections, 1989–2009. <i>Communication &amp; Society, 27</i>(4), 95–112. <a href="https://doi.org/10.15581/003.27.4.95-112" target="_blank" rel="noopener">doi.org/10.15581/003.27.4.95-112</a><span class="aporte">Mide la personalización en cuatro diarios chilenos durante dos décadas.</span></li>
+        <li id="ref-quinn2010">Quinn, K. M., Monroe, B. L., Colaresi, M., Crespin, M. H., y Radev, D. R. (2010). How to analyze political attention with minimal assumptions and costs. <i>American Journal of Political Science, 54</i>(1), 209–228. <a href="https://doi.org/10.1111/j.1540-5907.2009.00427.x" target="_blank" rel="noopener">doi.org/10.1111/j.1540-5907.2009.00427.x</a><span class="aporte">Mide la atención política como la proporción de textos de cada tópico en el tiempo.</span></li>
+        <li id="ref-rahat2007">Rahat, G., y Sheafer, T. (2007). The personalization(s) of politics: Israel, 1949–2003. <i>Political Communication, 24</i>(1), 65–80. <a href="https://doi.org/10.1080/10584600601128739" target="_blank" rel="noopener">doi.org/10.1080/10584600601128739</a><span class="aporte">Distingue personalización institucional, mediática y del comportamiento de los políticos.</span></li>
+        <li id="ref-reimers2019">Reimers, N., y Gurevych, I. (2019). Sentence-BERT: Sentence embeddings using Siamese BERT-networks. En <i>Proceedings of EMNLP-IJCNLP 2019</i> (pp. 3982–3992). Association for Computational Linguistics. <a href="https://doi.org/10.18653/v1/D19-1410" target="_blank" rel="noopener">doi.org/10.18653/v1/D19-1410</a><span class="aporte">La base de los vectores de oración usados aquí.</span></li>
+        <li id="ref-reimers2020">Reimers, N., y Gurevych, I. (2020). Making monolingual sentence embeddings multilingual using knowledge distillation. En <i>Proceedings of EMNLP 2020</i> (pp. 4512–4525). Association for Computational Linguistics. <a href="https://doi.org/10.18653/v1/2020.emnlp-main.365" target="_blank" rel="noopener">doi.org/10.18653/v1/2020.emnlp-main.365</a><span class="aporte">Cómo se entrenó la versión multilingüe del modelo, que permite trabajar en castellano.</span></li>
+        <li id="ref-rispolo2020">Ríspolo, F. (2020). El campo de la comunicación política: el lugar de la comunicación de gobierno. <i>Postdata, 25</i>(1), 73–98. <a href="https://www.redalyc.org/journal/522/52272877005/html/" target="_blank" rel="noopener">www.redalyc.org/journal/522/52272877005/html/</a><span class="aporte">Discute la tesis de la campaña permanente y lo propio de la comunicación de gobierno.</span></li>
+        <li id="ref-roberts2014">Roberts, M. E., Stewart, B. M., Tingley, D., Lucas, C., Leder-Luis, J., Gadarian, S. K., Albertson, B., y Rand, D. G. (2014). Structural topic models for open-ended survey responses. <i>American Journal of Political Science, 58</i>(4), 1064–1082. <a href="https://doi.org/10.1111/ajps.12103" target="_blank" rel="noopener">doi.org/10.1111/ajps.12103</a><span class="aporte">Modelo de tópicos en que el peso de cada tópico depende de variables como la fecha o el autor.</span></li>
+        <li id="ref-tristan2026">Tristán Jiménez, L., y Lizano Quirós, C. (2026). La IA como noticia: temas y encuadres de la inteligencia artificial en medios digitales costarricenses. <i>Cuadernos.info</i>, (64), 167–188. <a href="https://doi.org/10.7764/cdi.64.98912" target="_blank" rel="noopener">doi.org/10.7764/cdi.64.98912</a><span class="aporte">348 notas de 2022 y 2024: el encuadre pasa de explicativo a centrado en impactos y ética.</span></li>
+        <li id="ref-ulnicane2021">Ulnicane, I., Knight, W., Leach, T., Stahl, B. C., y Wanjiku, W.-G. (2021). Framing governance for a contested emerging technology: Insights from AI policy. <i>Policy and Society, 40</i>(2), 158–177. <a href="https://doi.org/10.1080/14494035.2020.1855800" target="_blank" rel="noopener">doi.org/10.1080/14494035.2020.1855800</a><span class="aporte">49 documentos de política de IA: la gobernanza como encuadre que da al Estado un rol activo.</span></li>
+        <li id="ref-vanaelst2012">Van Aelst, P., Sheafer, T., y Stanyer, J. (2012). The personalization of mediated political communication: A review of concepts, operationalizations and key findings. <i>Journalism, 13</i>(2), 203–220. <a href="https://doi.org/10.1177/1464884911427802" target="_blank" rel="noopener">doi.org/10.1177/1464884911427802</a><span class="aporte">Ordena cómo se ha medido la personalización en los contenidos.</span></li>
+        <li id="ref-wirtz2019">Wirtz, B. W., Weyerer, J. C., y Geyer, C. (2019). Artificial intelligence and the public sector—Applications and challenges. <i>International Journal of Public Administration, 42</i>(7), 596–615. <a href="https://doi.org/10.1080/01900692.2018.1498103" target="_blank" rel="noopener">doi.org/10.1080/01900692.2018.1498103</a><span class="aporte">Diez áreas de aplicación de la IA en el sector público y cuatro dimensiones de desafíos.</span></li>
+        <li id="ref-ying2022">Ying, L., Montgomery, J. M., y Stewart, B. M. (2022). Topics, concepts, and measurement: A crowdsourced procedure for validating topics as measures. <i>Political Analysis, 30</i>(4), 570–589. <a href="https://doi.org/10.1017/pan.2021.33" target="_blank" rel="noopener">doi.org/10.1017/pan.2021.33</a><span class="aporte">Procedimiento para validar que un tópico mide el concepto que se le atribuye.</span></li>
+      </ol>
+    </div>
+    <p class="pie">Código del análisis: <a href="https://github.com/Alcatruz/prensa-institucional" target="_blank" rel="noopener">github.com/Alcatruz/prensa-institucional</a>. Las notas de prensa no se publican en el repositorio.</p>
+  </section>
+</main>
+
+<div class="tip" id="tip" role="tooltip" hidden></div>
+
+<script id="datos" type="application/json"></script>
+<script>
+(function () {
+  "use strict";
+  const $ = (s, r) => (r || document).querySelector(s);
+  const NS = "http://www.w3.org/2000/svg";
+  function S(tag, attrs, padre) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs || {}) e.setAttribute(k, attrs[k]);
+    if (padre) padre.appendChild(e);
+    return e;
+  }
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const nf0 = new Intl.NumberFormat("es-CL", { maximumFractionDigits: 0, useGrouping: "always" });
+  const nf1 = new Intl.NumberFormat("es-CL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const nfc = new Intl.NumberFormat("es-CL", { maximumFractionDigits: 2 });
+  const n0 = v => nf0.format(v), n1 = v => nf1.format(v), pct = v => nf0.format(v) + " %";
+  const norm = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const MESES = ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sept.", "oct.", "nov.", "dic."];
+  const fecha = f => { const [a, m, d] = f.split("-"); return `${+d} ${MESES[+m - 1]} ${a}`; };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  // gobiernos (11 de marzo de cada cambio); un año se dibuja centrado en su número
+  const GOB = [
+    { nombre: "Bachelet", desde: -Infinity, hasta: 2018 },
+    { nombre: "Piñera", desde: 2018, hasta: 2022 },
+    { nombre: "Boric", desde: 2022, hasta: 2026 },
+    { nombre: "Kast", desde: 2026, hasta: Infinity },
+  ];
+  const marzo = a => a - 0.5 + 70 / 365;
+  const EVENTOS = [
+    { x: 2019 - 0.5 + 10.35 / 12, t: "Ley 21.180 de Transformación Digital del Estado (publicada en nov. 2019)", ref: "ley21180" },
+    { x: 2021 - 0.5 + 8.65 / 12, t: "Política Nacional de Inteligencia Artificial (decreto de sept. 2021)", ref: "pnia2021" },
+    { x: 2022 - 0.5 + 10.97 / 12, t: "Lanzamiento de ChatGPT (nov. 2022)" },
+    { x: 2024 - 0.5 + 3.35 / 12, t: "Actualización de la Política Nacional de IA (decreto de abr. 2024)", ref: "pnia2024" },
+  ];
+  const TEND = ["cae a menos de la mitad", "cae", "estable", "crece", "se duplica o más"];
+  const TCLS = ["t-cae2", "t-cae1", "t-neutro", "t-crece1", "t-crece2"];
+  const CORTES = [0.25, 1, 2, 4, 8, 16, 32];
+
+  const tip = $("#tip");
+  function mostrarTip(html, e) {
+    tip.innerHTML = html;
+    tip.hidden = false;
+    const r = tip.getBoundingClientRect(), m = 12;
+    let x = e.clientX + 14, y = e.clientY + 14;
+    if (x + r.width > innerWidth - m) x = e.clientX - r.width - 14;
+    if (y + r.height > innerHeight - m) y = e.clientY - r.height - 14;
+    tip.style.left = Math.max(m, x) + "px";
+    tip.style.top = Math.max(m, y) + "px";
+  }
+  const ocultarTip = () => { tip.hidden = true; };
+  function puntoSVG(svg, e) {
+    const p = svg.createSVGPoint();
+    p.x = e.clientX; p.y = e.clientY;
+    return p.matrixTransform(svg.getScreenCTM().inverse());
+  }
+  function ticks(max) {
+    const bruto = max / 4, p = Math.pow(10, Math.floor(Math.log10(bruto)));
+    const paso = [1, 2, 2.5, 5, 10].find(m => m * p >= bruto) * p;
+    const n = Math.max(1, Math.ceil(max / paso - 1e-9));
+    return Array.from({ length: n + 1 }, (_, i) => +(i * paso).toFixed(6));
+  }
+
+  async function cargar() {
+    const nodo = document.getElementById("datos");
+    if (nodo && nodo.textContent.trim()) return JSON.parse(nodo.textContent);
+    const r = await fetch("datos.json");
+    if (!r.ok) throw new Error("respuesta " + r.status);
+    return r.json();
+  }
+
+  cargar().then(iniciar).catch(err => {
+    const e = $("#estado");
+    e.hidden = false;
+    e.textContent = "No se pudieron cargar los datos del explorador (" + err.message + "). Vuelve a generar la página con la etapa «explorador» del script.";
+  });
+
+  function iniciar(D) {
+    const A = D.anios, NA = A.length;
+    const T = new Map(D.topicos.map(t => [t.id, t]));
+    const MIN = D.ministerios.map(m => m.nombre);
+    const ORG = D.organismos;
+    D.topicos.forEach(t => { t._txt = norm(t.palabras.join(" | ")); });
+    const etiq = (t, n) => t.palabras.slice(0, n || 4).join(" · ");
+    const minPrincipal = t => MIN[t.ministerios[0][0]];
+    const tend = t => { const v = Math.log2(t.razon); return v >= 1 ? 4 : v >= 0.4 ? 3 : v > -0.4 ? 2 : v > -1 ? 1 : 0; };
+    const conteo = (serie, i) => Math.round(serie[i] * D.notas_por_anio[i] / 1000);
+    const RE_DIGITAL = /^(?:digital|transformación digital|gobierno digital|salud digital|servicios digitales|ciberseguridad|datos personales|inteligencia artificial)$|algoritm|automatizaci/;
+    const esIA = t => t.ia / t.notas >= 0.2 || t.palabras.slice(0, 3).some(p => RE_DIGITAL.test(p));
+    const badge = t => t.tipo === "autoridad" ? ' <span class="insignia">autoridad</span>' : "";
+
+    const candidatosIA = D.topicos.filter(t => t.notas >= 50).sort((a, b) => b.ia / b.notas - a.ia / a.notas);
+    const estado = {
+      sel: candidatosIA[0].id, min: "", tipo: "todos", q: "", vista: "cruda", notas: "representativas",
+      lista: "crecen", minSel: null,
+    };
+    const h = /^#t(\d+)$/.exec(location.hash);
+    if (h && T.has(+h[1])) estado.sel = +h[1];
+
+    // cifras de cabecera
+    $("#c-notas").textContent = n0(D.notas_total);
+    $("#c-min").textContent = n0(MIN.length);
+    $("#c-top").textContent = n0(D.topicos.length);
+    $("#c-sin").textContent = pct(D.sin_topico);
+
+    /* ---------------- gráfico de línea genérico ---------------- */
+    function grafLinea(cont, op) {
+      const W = 560, H = op.alto || 220, ml = 38, mr = 12, mt = 24, mb = 24;
+      const svg = S("svg", { viewBox: `0 0 ${W} ${H}`, class: "graf", role: "img", "aria-label": op.etiqueta || "" });
+      cont.replaceChildren(svg);
+      const x0 = A[0] - 0.5, x1 = A[NA - 1] + 0.5;
+      const X = a => ml + (a - x0) / (x1 - x0) * (W - ml - mr);
+      const validos = op.vals.filter(v => v != null);
+      const tk = ticks(Math.max(...validos, 0.01)), ymax = tk[tk.length - 1];
+      const Y = v => mt + (1 - v / ymax) * (H - mt - mb);
+      GOB.forEach((g, i) => {
+        const a = Math.max(g.desde === -Infinity ? x0 : marzo(g.desde), x0);
+        const b = Math.min(g.hasta === Infinity ? x1 : marzo(g.hasta), x1);
+        if (b <= a) return;
+        if (i % 2 === 1) S("rect", { x: X(a), y: mt, width: X(b) - X(a), height: H - mt - mb, class: "banda" }, svg);
+        if (X(b) - X(a) > 26) S("text", { x: X(a) + 4, y: mt - 8, class: "gob" }, svg).textContent = g.nombre;
+      });
+      tk.forEach(v => {
+        S("line", { x1: ml, x2: W - mr, y1: Y(v), y2: Y(v), class: v === 0 ? "base" : "rejilla" }, svg);
+        S("text", { x: ml - 6, y: Y(v) + 3.5, class: "tick", "text-anchor": "end" }, svg).textContent = nfc.format(v);
+      });
+      A.forEach((a, i) => {
+        if (i % 2 === 0 || i === NA - 1)
+          S("text", { x: X(a), y: H - 6, class: "tick", "text-anchor": "middle" }, svg).textContent = i === 0 || i === NA - 1 ? a : "’" + String(a).slice(2);
+      });
+      (op.eventos || []).forEach((ev, k) => {
+        S("line", { x1: X(ev.x), x2: X(ev.x), y1: mt + 9, y2: H - mb, class: "evento" }, svg);
+        S("circle", { cx: X(ev.x), cy: mt + 1, r: 7, class: "marca" }, svg);
+        S("text", { x: X(ev.x), y: mt + 4.5, class: "marca-t", "text-anchor": "middle" }, svg).textContent = k + 1;
+      });
+      let d = "", abierto = false;
+      op.vals.forEach((v, i) => {
+        if (v == null) { abierto = false; return; }
+        d += (abierto ? "L" : "M") + X(A[i]).toFixed(1) + "," + Y(v).toFixed(1);
+        abierto = true;
+      });
+      S("path", { d, class: "trazo" }, svg);
+      op.vals.forEach((v, i) => { if (v != null) S("circle", { cx: X(A[i]), cy: Y(v), r: 3.5, class: "pto" }, svg); });
+      const guia = S("line", { y1: mt, y2: H - mb, class: "guia", visibility: "hidden" }, svg);
+      const foco = S("circle", { r: 5, class: "foco", visibility: "hidden" }, svg);
+      const capa = S("rect", { x: ml, y: 0, width: W - ml - mr, height: H, fill: "transparent" }, svg);
+      capa.addEventListener("pointermove", e => {
+        const p = puntoSVG(svg, e);
+        const i = clamp(Math.round(x0 + (p.x - ml) / (W - ml - mr) * (x1 - x0)) - A[0], 0, NA - 1);
+        const v = op.vals[i];
+        guia.setAttribute("x1", X(A[i])); guia.setAttribute("x2", X(A[i]));
+        guia.setAttribute("visibility", "visible");
+        if (v != null) {
+          foco.setAttribute("cx", X(A[i])); foco.setAttribute("cy", Y(v));
+          foco.setAttribute("visibility", "visible");
+        }
+        mostrarTip(op.tip(i), e);
+      });
+      capa.addEventListener("pointerleave", () => {
+        guia.setAttribute("visibility", "hidden"); foco.setAttribute("visibility", "hidden"); ocultarTip();
+      });
+    }
+
+    /* ---------------- barras HTML ---------------- */
+    function barras(cont, filas, op) {
+      const max = Math.max(...filas.map(f => f.v), 1e-9);
+      cont.innerHTML = filas.map(f => {
+        const tag = f.id != null ? "button" : "div";
+        const attrs = f.id != null ? ` type="button" data-id="${f.id}"${f.actual ? ' aria-current="true"' : ""}` : "";
+        return `<${tag} class="barra"${attrs}><span class="et">${f.et}</span>` +
+          `<span class="pista"><span class="relleno" style="width:${(100 * f.v / max).toFixed(1)}%"></span></span>` +
+          `<span class="val">${f.txt}</span></${tag}>`;
+      }).join("");
+      if (op && op.clic) cont.querySelectorAll("button.barra").forEach(b => b.addEventListener("click", () => op.clic(+b.dataset.id)));
+    }
+
+    /* ---------------- mapa ---------------- */
+    const MW = 640, MH = 540, MP = 30;
+    const svgM = $("#mapa");
+    svgM.setAttribute("viewBox", `0 0 ${MW} ${MH}`);
+    const gB = S("g", {}, svgM), gL = S("g", {}, svgM);
+    const px = t => MP + t.x * (MW - 2 * MP), py = t => MP + (1 - t.y) * (MH - 2 * MP);
+    const nodos = new Map();
+    [...D.topicos].sort((a, b) => b.notas - a.notas).forEach(t => {
+      nodos.set(t.id, S("circle", {
+        cx: px(t).toFixed(1), cy: py(t).toFixed(1),
+        class: "burbuja " + TCLS[tend(t)] + (t.tipo === "autoridad" ? " autoridad" : ""),
+      }, gB));
+    });
+    let radio = () => 0;
+    const visible = t => (estado.tipo === "todos" || t.tipo === estado.tipo) && (!estado.q || t._txt.includes(estado.q)) && radio(t) > 0;
+
+    function dibujarMapa() {
+      const mi = estado.min === "" ? null : +estado.min;
+      const val = t => mi === null ? t.notas : ((t.ministerios.find(m => m[0] === mi) || [0, 0])[1]);
+      const max = Math.max(...D.topicos.map(val), 1);
+      radio = t => { const v = val(t); return v ? 2.5 + 17 * Math.sqrt(v / max) : 0; };
+      let n = 0;
+      const coinciden = [];
+      for (const t of D.topicos) {
+        const c = nodos.get(t.id), r = radio(t), vis = visible(t);
+        c.setAttribute("r", Math.max(r, 2.5).toFixed(1));
+        c.classList.toggle("apagada", !vis);
+        if (vis) { n++; coinciden.push(t); }
+      }
+      const filtrado = estado.q || estado.min !== "" || estado.tipo !== "todos";
+      $("#conteo").textContent = filtrado ? `${n0(n)} de ${n0(D.topicos.length)} tópicos` : "";
+      gL.replaceChildren();
+      const rotular = (t, cls) => {
+        const x = px(t), y = py(t), r = Math.max(radio(t), 2.5), der = x > MW * 0.66;
+        S("text", { x: der ? x - r - 5 : x + r + 5, y: y + 4, class: cls, "text-anchor": der ? "end" : "start" }, gL)
+          .textContent = etiq(t, 3);
+      };
+      if (estado.q && coinciden.length <= 10) coinciden.forEach(t => { if (t.id !== estado.sel) rotular(t, "rotulo menor"); });
+      const s = T.get(estado.sel);
+      if (s) {
+        S("circle", { cx: px(s), cy: py(s), r: Math.max(radio(s), 2.5) + 3, class: "anillo" }, gL);
+        rotular(s, "rotulo");
+      }
+    }
+
+    function cercano(e, umbral) {
+      const p = puntoSVG(svgM, e);
+      let mejor = null, dm = Infinity;
+      for (const t of D.topicos) {
+        if (!visible(t)) continue;
+        const d = Math.hypot(px(t) - p.x, py(t) - p.y) - Math.max(radio(t), 2.5);
+        if (d < dm) { dm = d; mejor = t; }
+      }
+      return dm <= umbral ? mejor : null;
+    }
+    const tipTopico = t => `<strong>${esc(etiq(t))}</strong>` +
+      `<span>${n0(t.notas)} notas · ${esc(minPrincipal(t))}${t.tipo === "autoridad" ? " · agenda de autoridad" : ""}</span>` +
+      `<span>Por mil notas: ${n1(t.antes)} (2018–22) → ${n1(t.reciente)} (2023–26), ${TEND[tend(t)]}</span>`;
+    svgM.addEventListener("pointermove", e => {
+      const t = cercano(e, 6);
+      svgM.style.cursor = t ? "pointer" : "default";
+      if (t) mostrarTip(tipTopico(t), e); else ocultarTip();
+    });
+    svgM.addEventListener("pointerleave", ocultarTip);
+    svgM.addEventListener("click", e => { const t = cercano(e, 12); if (t) seleccionar(t.id); });
+
+    $("#leyenda-mapa").innerHTML =
+      [4, 3, 2, 1, 0].map(k => `<span><i class="punto ${TCLS[k]}"></i>${TEND[k][0].toUpperCase() + TEND[k].slice(1)}</span>`).join("") +
+      `<span><i class="punto hueco"></i>Agenda de autoridad</span>`;
+
+    // controles del mapa
+    const selMin = $("#f-min");
+    MIN.forEach((m, i) => { const o = document.createElement("option"); o.value = i; o.textContent = m; selMin.appendChild(o); });
+    selMin.addEventListener("change", () => { estado.min = selMin.value; dibujarMapa(); });
+    let tq;
+    $("#buscar").addEventListener("input", e => {
+      clearTimeout(tq);
+      tq = setTimeout(() => { estado.q = norm(e.target.value.trim()); dibujarMapa(); }, 120);
+    });
+    $("#f-tipo").addEventListener("click", e => {
+      const b = e.target.closest("button[data-tipo]"); if (!b) return;
+      estado.tipo = b.dataset.tipo;
+      $("#f-tipo").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b));
+      dibujarMapa();
+    });
+
+    /* ---------------- ficha ---------------- */
+    const ficha = $("#ficha");
+    function dibujarFicha() {
+      const t = T.get(estado.sel);
+      const conNotas = Array.isArray(t.representativas);
+      const notas = !conNotas ? [] : estado.notas === "representativas" ? t.representativas : t.recientes;
+      ficha.innerHTML = `
+        <p class="sobre">Tópico ${t.id} · ${t.tipo === "autoridad" ? "Agenda de autoridad" : "Tema"}</p>
+        <h3>${esc(etiq(t))}</h3>
+        <ul class="chips" aria-label="Palabras clave">${t.palabras.map(p => `<li>${esc(p)}</li>`).join("")}</ul>
+        <dl class="hechos">
+          <div><dt>Notas en el tópico</dt><dd class="num">${n0(t.notas)}</dd></div>
+          <div><dt>Ministerio principal</dt><dd>${esc(minPrincipal(t))}</dd></div>
+          <div><dt>Nombran la IA</dt><dd class="num">${n0(t.ia)} (${pct(100 * t.ia / t.notas)})</dd></div>
+          <div><dt>Por mil notas, 2018–22 → 2023–26</dt><dd class="num">${n1(t.antes)} → ${n1(t.reciente)}
+            <span class="tend"><i class="punto ${TCLS[tend(t)]}"></i>${TEND[tend(t)]}</span></dd></div>
+        </dl>
+        <div class="sub"><h4>Peso por año</h4>
+          <div class="seg" role="group" aria-label="Forma de contar">
+            <button type="button" data-vista="cruda" aria-pressed="${estado.vista === "cruda"}">Todas las notas</button>
+            <button type="button" data-vista="pareja" aria-pressed="${estado.vista === "pareja"}">Cada ministerio pesa igual</button>
+          </div></div>
+        <div id="ficha-linea"></div>
+        <p class="nota-graf">${estado.vista === "cruda"
+          ? "Notas del tópico por cada mil notas ministeriales del año."
+          : "Promedio, entre los ministerios con notas ese año, de cuántas de cada mil notas del ministerio caen en el tópico."} 2026 llega hasta noviembre.</p>
+        <h4>Ministerios que publican en este tópico</h4>
+        <div class="barras" id="ficha-min"></div>
+        <div class="sub"><h4>Notas del tópico</h4>
+          <div class="seg" role="group" aria-label="Notas a mostrar"${conNotas ? "" : " hidden"}>
+            <button type="button" data-notas="representativas" aria-pressed="${estado.notas === "representativas"}">Más representativas</button>
+            <button type="button" data-notas="recientes" aria-pressed="${estado.notas === "recientes"}">Más recientes</button>
+          </div></div>
+        ${conNotas ? "" : '<p class="sin-notas">Esta versión no incluye notas de ejemplo, porque el repositorio no publica el texto de las notas. La versión local que genera la etapa <code>explorador</code> sí las muestra.</p>'}
+        <ol class="notas">${notas.map(([f, o, ti, u]) =>
+          `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(ti)}</a><span class="meta">${fecha(f)} · ${esc(ORG[o])}</span></li>`).join("")}</ol>`;
+      const serie = estado.vista === "cruda" ? t.serie : t.pareja;
+      grafLinea($("#ficha-linea"), {
+        vals: serie, alto: 200, etiqueta: "Peso del tópico por año",
+        tip: i => `<strong>${A[i]}</strong><span>${serie[i] == null ? "sin datos" : nfc.format(serie[i]) + " por mil"}` +
+          (estado.vista === "cruda" ? ` · ${n0(conteo(t.serie, i))} notas` : "") + "</span>",
+      });
+      const tot = t.notas;
+      barras($("#ficha-min"), t.ministerios.slice(0, 6).map(([m, n]) => ({
+        et: esc(MIN[m]), v: n, txt: `${n0(n)} · ${pct(100 * n / tot)}`,
+      })));
+    }
+    ficha.addEventListener("click", e => {
+      const b = e.target.closest("button[data-vista],button[data-notas]"); if (!b) return;
+      if (b.dataset.vista) estado.vista = b.dataset.vista; else estado.notas = b.dataset.notas;
+      dibujarFicha();
+    });
+
+    function seleccionar(id, desplazar) {
+      estado.sel = id;
+      try { history.replaceState(null, "", "#t" + id); } catch (e) { /* sin historial */ }
+      dibujarMapa();
+      dibujarFicha();
+      marcarFilas();
+      document.querySelectorAll("#arbol .hoja[data-id]").forEach(d => d.classList.toggle("sel", +d.dataset.id === id));
+      if (desplazar) $("#explorar").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    }
+
+    /* ---------------- todos los tópicos, agrupados por ministerio principal (treemap) ---------------- */
+    const CORTO = {
+      "Secretaría General de Gobierno": "Segegob", "Secretaría General de la Presidencia": "Segpres",
+      "Transportes y Telecomunicaciones": "Transportes y Telecom.", "Culturas, Artes y Patrimonio": "Culturas",
+      "Desarrollo Social y Familia": "Desarrollo Social", "Mujer y Equidad de Género": "Mujer y Equidad",
+      "Trabajo y Previsión Social": "Trabajo", "Ciencia y Tecnología": "Ciencia", "Vivienda y Urbanismo": "Vivienda",
+      "Defensa Nacional": "Defensa", "Seguridad Pública": "Seguridad",
+    };
+    const PERIODO = { 1: `${A[0]}–${A[NA - 1]}`, 2: "2018–2022", 3: "2023–2026" };
+    const notasPeriodo = { 1: 0, 2: 0, 3: 0 };
+    A.forEach((a, i) => {
+      notasPeriodo[1] += D.notas_por_anio[i];
+      if (a >= 2018 && a <= 2022) notasPeriodo[2] += D.notas_por_anio[i];
+      if (a >= 2023) notasPeriodo[3] += D.notas_por_anio[i];
+    });
+    estado.periodo = 1;
+    estado.zoom = "";
+    // notas de cada tópico por período (1: todo, 2: 2018-22, 3: 2023-26) y grupo según su ministerio principal
+    const grupos = D.ministerios.map(() => []);
+    D.topicos.forEach(t => {
+      t._per = [0, 0, 0, 0];
+      (t.por_periodo || []).forEach(([, n, a, r]) => { t._per[1] += n; t._per[2] += a; t._per[3] += r; });
+      grupos[t.ministerios[0][0]].push(t);
+    });
+    grupos.forEach(g => g.sort((a, b) => b._per[1] - a._per[1]));
+    // orden fijo de los bloques (por notas 2014-2026), para que no salten al cambiar de período
+    const ordenGrupos = grupos.map((g, i) => ({ i, v: g.reduce((s, t) => s + t._per[1], 0) }))
+      .filter(x => x.v > 0).sort((a, b) => b.v - a.v).map(x => x.i);
+
+    function peor(fila, lado) {
+      let s = 0, mx = 0, mn = Infinity;
+      fila.forEach(f => { s += f.a; mx = Math.max(mx, f.a); mn = Math.min(mn, f.a); });
+      return Math.max(lado * lado * mx / (s * s), s * s / (lado * lado * mn));
+    }
+    function squarify(items, x, y, w, h) {
+      const out = [], tot = items.reduce((s, i) => s + i.v, 0);
+      if (!tot || w <= 0 || h <= 0) return out;
+      let resto = items.map(it => ({ it, a: it.v * w * h / tot }));
+      while (resto.length) {
+        const lado = Math.min(w, h);
+        let fila = [resto[0]], p = peor(fila, lado), j = 1;
+        while (j < resto.length) {
+          const c = fila.concat(resto[j]), q = peor(c, lado);
+          if (q > p) break;
+          fila = c; p = q; j++;
+        }
+        const suma = fila.reduce((s, f) => s + f.a, 0);
+        if (w >= h) {
+          const ancho = suma / h; let yy = y;
+          fila.forEach(f => { const alto = f.a / ancho; out.push({ it: f.it, x, y: yy, w: ancho, h: alto }); yy += alto; });
+          x += ancho; w -= ancho;
+        } else {
+          const alto = suma / w; let xx = x;
+          fila.forEach(f => { const ancho = f.a / alto; out.push({ it: f.it, x: xx, y, w: ancho, h: alto }); xx += ancho; });
+          y += alto; h -= alto;
+        }
+        resto = resto.slice(fila.length);
+      }
+      return out;
+    }
+    const ubicar = (el, x, y, w, h) => { el.style.cssText = `left:${x.toFixed(1)}px;top:${y.toFixed(1)}px;width:${w.toFixed(1)}px;height:${h.toFixed(1)}px`; };
+    function hojas(frag, mi, x, y, w, h) {
+      const k = estado.periodo;
+      const items = grupos[mi].filter(t => t._per[k] > 0).map(t => ({ t, v: t._per[k] }));
+      squarify(items, x, y, w, h).forEach(r => {
+        const t = r.it.t, v = r.it.v, xx = r.x + 1, yy = r.y + 1, ww = r.w - 2, hh = r.h - 2;
+        if (ww < 1 || hh < 1) return;
+        const d = document.createElement("div");
+        ubicar(d, xx, yy, ww, hh);
+        d.className = "hoja " + TCLS[tend(t)] + (t.tipo === "autoridad" ? " autoridad" : "") + (t.id === estado.sel ? " sel" : "");
+        d.dataset.id = t.id;
+        d.dataset.v = v;
+        // en la etiqueta van solo las palabras clave cuya palabra más larga cabe entera (11 px ≈ 6,3 px por letra)
+        const cabe = p => Math.max(...p.split(" ").map(x => x.length)) * 6.3 + 12 <= ww;
+        if (ww >= 44 && hh >= 18 && cabe(t.palabras[0])) {
+          const conValor = hh >= 46 && ww >= 60;
+          const lineas = Math.max(1, Math.floor((hh - 6 - (conValor ? 15 : 0)) / 13.2));
+          d.innerHTML = `<span class="h-et" style="-webkit-line-clamp:${lineas}">${esc(t.palabras.slice(0, 3).filter(cabe).join(" · "))}</span>` +
+            (conValor ? `<span class="h-v">${n0(v)} notas</span>` : "");
+        }
+        frag.appendChild(d);
+      });
+    }
+    const arbol = $("#arbol");
+    let anchoArbol = 0;
+    function dibujarArbol() {
+      const W = arbol.clientWidth;
+      if (!W) return;
+      anchoArbol = W;
+      const H = Math.round(clamp(W * 0.62, 480, 720));
+      arbol.style.height = H + "px";
+      const k = estado.periodo, frag = document.createDocumentFragment();
+      if (estado.zoom === "") {
+        const blqs = ordenGrupos.map(i => ({ i, v: grupos[i].reduce((s, t) => s + t._per[k], 0) })).filter(b => b.v > 0);
+        squarify(blqs, 0, 0, W, H).forEach(r => {
+          const x = r.x + 2, y = r.y + 2, w = r.w - 4, h = r.h - 4;
+          if (w < 2 || h < 2) return;
+          const div = document.createElement("div");
+          div.className = "blq";
+          ubicar(div, x, y, w, h);
+          const cab = h >= 44 && w >= 56 ? 20 : 0;
+          if (cab) {
+            const b = document.createElement("button");
+            b.type = "button"; b.className = "cab-min";
+            const nt = grupos[r.it.i].filter(t => t._per[k] > 0).length;
+            Object.assign(b.dataset, { zoom: r.it.i, v: r.it.v, nt });
+            b.innerHTML = `${esc(CORTO[MIN[r.it.i]] || MIN[r.it.i])} <span>${nt}</span>`;
+            div.appendChild(b);
+          }
+          frag.appendChild(div);
+          hojas(frag, r.it.i, x, y + cab, w, h - cab);
+        });
+        const nt = D.topicos.filter(t => t._per[k] > 0).length;
+        $("#nota-arbol").textContent = `${n0(nt)} tópicos con notas en ${PERIODO[k]}. Cada tópico aparece una vez, en el bloque del ministerio que más notas publica en él; ` +
+          "el número junto al nombre es la cantidad de tópicos que encabeza. Quedan fuera las notas sin tópico. El tamaño de los bloques también depende de cuán completo es el archivo de cada ministerio en el período.";
+      } else {
+        const mi = +estado.zoom;
+        hojas(frag, mi, 0, 0, W, H);
+        const g = grupos[mi].filter(t => t._per[k] > 0);
+        $("#nota-arbol").textContent = `${MIN[mi]} es el ministerio principal de ${g.length} tópicos con notas en ${PERIODO[k]}. ` +
+          "Las notas de cada tópico incluyen las de todos los ministerios que publican en él. El perfil completo del ministerio, con los tópicos que encabezan otros, está más abajo en «Cómo comunica cada ministerio».";
+      }
+      arbol.replaceChildren(frag);
+    }
+    function irA(zoom) {
+      estado.zoom = String(zoom);
+      $("#f-arbol").value = estado.zoom;
+      dibujarArbol();
+    }
+    ordenGrupos.forEach(i => { const o = document.createElement("option"); o.value = i; o.textContent = MIN[i]; $("#f-arbol").appendChild(o); });
+    $("#f-arbol").addEventListener("change", e => irA(e.target.value));
+    $("#f-periodo").addEventListener("click", e => {
+      const b = e.target.closest("button[data-periodo]"); if (!b) return;
+      estado.periodo = +b.dataset.periodo;
+      $("#f-periodo").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b));
+      dibujarArbol();
+    });
+    arbol.addEventListener("click", e => {
+      const z = e.target.closest("[data-zoom]");
+      if (z) { irA(z.dataset.zoom); return; }
+      const h = e.target.closest(".hoja");
+      if (h) seleccionar(+h.dataset.id, true);
+    });
+    arbol.addEventListener("pointermove", e => {
+      const el = e.target.closest(".hoja,.cab-min");
+      if (!el) { ocultarTip(); return; }
+      const k = estado.periodo, per = PERIODO[k], v = +el.dataset.v;
+      let html;
+      if (el.classList.contains("cab-min")) {
+        const mi = +el.dataset.zoom;
+        html = `<strong>${esc(MIN[mi])}</strong><span>Ministerio principal de ${el.dataset.nt} tópicos, con ${n0(v)} notas en ${per}</span><span>Clic para verlos en grande</span>`;
+      } else {
+        const t = T.get(+el.dataset.id);
+        const otros = t.ministerios.slice(1, 3).map(([m]) => MIN[m]);
+        html = `<strong>${esc(etiq(t))}</strong><span>${n0(v)} notas en ${per} · ${nfc.format(+(1000 * v / notasPeriodo[k]).toFixed(2))} por mil</span>` +
+          `<span>Principal: ${esc(minPrincipal(t))}${otros.length ? " · también " + esc(otros.join(", ")) : ""}</span>` +
+          `<span>${n1(t.antes)} → ${n1(t.reciente)} por mil (2018–22 → 2023–26), ${TEND[tend(t)]}</span>` +
+          (t.tipo === "autoridad" ? "<span>Tópico de agenda de autoridad</span>" : "");
+      }
+      mostrarTip(html, e);
+    });
+    arbol.addEventListener("pointerleave", ocultarTip);
+    $("#leyenda-arbol").innerHTML =
+      [4, 3, 2, 1, 0].map(k => `<span><i class="punto ${TCLS[k]}"></i>${TEND[k][0].toUpperCase() + TEND[k].slice(1)}</span>`).join("") +
+      `<span><i class="cuadro borde"></i>Agenda de autoridad</span>`;
+    if (window.ResizeObserver) new ResizeObserver(() => { if (arbol.clientWidth !== anchoArbol) dibujarArbol(); }).observe(arbol);
+    else addEventListener("resize", dibujarArbol);
+
+    /* ---------------- lista con mapa de calor ---------------- */
+    const temas = D.topicos.filter(t => t.tipo === "tema");
+    const calor = $("#calor");
+    calor.style.setProperty("--n", NA);
+    const clase = v => { let c = ""; CORTES.forEach((k, i) => { if (v >= k) c = "s" + (i + 1); }); return c; };
+    function dibujarLista() {
+      let L;
+      if (estado.lista === "crecen") L = temas.filter(t => t.reciente >= 2).sort((a, b) => b.razon - a.razon).slice(0, 25);
+      else if (estado.lista === "caen") L = temas.filter(t => t.antes >= 2).sort((a, b) => a.razon - b.razon).slice(0, 25);
+      else if (estado.lista === "ia") L = D.topicos.filter(esIA).sort((a, b) => b.ia / b.notas - a.ia / a.notas);
+      else L = [...D.topicos].sort((a, b) => b.notas - a.notas);
+      const cab = `<div class="fila cab" aria-hidden="true"><span>Tópico</span>${A.map((a, i) =>
+        `<span>${i === 0 ? a : "’" + String(a).slice(2)}</span>`).join("")}<span style="text-align:left;padding-left:10px">Ministerio principal</span><span style="text-align:right">Notas</span></div>`;
+      calor.innerHTML = cab + L.map(t => `<button type="button" class="fila" data-id="${t.id}"` +
+        ` aria-label="${esc(etiq(t))}, ${n0(t.notas)} notas, ${TEND[tend(t)]}">` +
+        `<span class="et">${esc(etiq(t, 3))}${badge(t)}</span>` +
+        t.serie.map((v, i) => `<span class="celda ${clase(v)}" data-i="${i}"></span>`).join("") +
+        `<span class="min">${esc(minPrincipal(t))}</span><span class="n">${n0(t.notas)}</span></button>`).join("");
+      marcarFilas();
+    }
+    function marcarFilas() {
+      calor.querySelectorAll("button.fila").forEach(b => b.setAttribute("aria-current", +b.dataset.id === estado.sel));
+    }
+    calor.addEventListener("click", e => { const b = e.target.closest("button.fila"); if (b) seleccionar(+b.dataset.id, true); });
+    calor.addEventListener("pointermove", e => {
+      const c = e.target.closest(".celda"); if (!c) { ocultarTip(); return; }
+      const t = T.get(+c.closest("button.fila").dataset.id), i = +c.dataset.i;
+      mostrarTip(`<strong>${A[i]} · ${esc(etiq(t, 3))}</strong><span>${nfc.format(t.serie[i])} por mil · ${n0(conteo(t.serie, i))} notas</span>`, e);
+    });
+    calor.addEventListener("pointerleave", ocultarTip);
+    $("#f-lista").addEventListener("click", e => {
+      const b = e.target.closest("button[data-lista]"); if (!b) return;
+      estado.lista = b.dataset.lista;
+      $("#f-lista").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b));
+      dibujarLista();
+    });
+    $("#escala").innerHTML = "<span>Por mil notas del año:</span>" + CORTES.map((k, i) =>
+      `<span><i class="s${i + 1}"></i>${nfc.format(k)}${i === CORTES.length - 1 ? " o más" : ""}</span>`).join("") +
+      `<span><i style="background:var(--vacio)"></i>menos de ${nfc.format(CORTES[0])}</span>`;
+
+    /* ---------------- ministerios ---------------- */
+    const ordenMin = D.ministerios.map((m, i) => ({ m, i })).sort((a, b) => b.m.agenda - a.m.agenda);
+    estado.minSel = ordenMin[0].i;
+    function dibujarBarrasMin() {
+      barras($("#barras-min"), ordenMin.map(({ m, i }) => ({ id: i, et: esc(m.nombre), v: m.agenda, txt: pct(m.agenda), actual: i === estado.minSel })),
+        { clic: i => { estado.minSel = i; dibujarBarrasMin(); dibujarPerfil(); } });
+    }
+    function dibujarPerfil() {
+      const m = D.ministerios[estado.minSel];
+      const p = $("#perfil");
+      p.innerHTML = `<p class="sobre">Perfil del ministerio</p><h3>${esc(m.nombre)}</h3>
+        <p class="resumen">${n0(m.notas)} notas entre ${A[0]} y ${A[NA - 1]}; ${pct(m.agenda)} en tópicos de agenda de autoridad; ${n0(m.ia)} nombran la IA.</p>
+        <div style="display:grid;gap:6px"><h4>Notas por año</h4><div id="perfil-cob"></div></div>
+        <div style="display:grid;gap:8px"><h4>Sus tópicos principales (% de sus notas)</h4><div class="barras" id="perfil-top"></div></div>
+        <button type="button" class="boton" id="ver-en-mapa">Ver sus tópicos en el mapa</button>`;
+      // cobertura: columnas por año
+      const W = 560, H = 92, ml = 38, mr = 12, mt = 8, mb = 20;
+      const svg = S("svg", { viewBox: `0 0 ${W} ${H}`, class: "graf", role: "img", "aria-label": "Notas por año" });
+      $("#perfil-cob").appendChild(svg);
+      const tk = ticks(Math.max(...m.por_anio, 1)), ymax = tk[tk.length - 1];
+      const paso = (W - ml - mr) / NA, ancho = Math.min(22, paso - 4);
+      S("line", { x1: ml, x2: W - mr, y1: H - mb, y2: H - mb, class: "base" }, svg);
+      S("text", { x: ml - 6, y: mt + 4, class: "tick", "text-anchor": "end" }, svg).textContent = n0(ymax);
+      m.por_anio.forEach((v, i) => {
+        const x = ml + i * paso + (paso - ancho) / 2, hh = (H - mt - mb) * v / ymax;
+        if (v > 0) {
+          const r = Math.min(4, hh);
+          S("path", { d: `M${x},${H - mb}V${H - mb - hh + r}q0,-${r} ${r},-${r}h${ancho - 2 * r}q${r},0 ${r},${r}V${H - mb}Z`, class: "col" }, svg);
+        }
+        if (i % 2 === 0 || i === NA - 1)
+          S("text", { x: x + ancho / 2, y: H - 5, class: "tick", "text-anchor": "middle" }, svg).textContent = i === 0 || i === NA - 1 ? A[i] : "’" + String(A[i]).slice(2);
+      });
+      const capa = S("rect", { x: ml, y: 0, width: W - ml - mr, height: H, fill: "transparent" }, svg);
+      capa.addEventListener("pointermove", e => {
+        const i = clamp(Math.floor((puntoSVG(svg, e).x - ml) / paso), 0, NA - 1);
+        mostrarTip(`<strong>${A[i]}</strong><span>${n0(m.por_anio[i])} notas</span>`, e);
+      });
+      capa.addEventListener("pointerleave", ocultarTip);
+      barras($("#perfil-top"), m.topicos.map(([id, v]) => ({ id, et: esc(etiq(T.get(id), 3)) + badge(T.get(id)), v, txt: n1(v) + " %" })),
+        { clic: id => seleccionar(id, true) });
+      $("#ver-en-mapa").addEventListener("click", () => {
+        estado.min = String(estado.minSel); selMin.value = estado.min;
+        dibujarMapa();
+        $("#explorar").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+      });
+    }
+
+    /* ---------------- IA ---------------- */
+    const iaMil = D.ia_por_anio.map((n, i) => 1000 * n / D.notas_por_anio[i]);
+    grafLinea($("#ia-linea"), {
+      vals: iaMil, alto: 230, eventos: EVENTOS, etiqueta: "Notas que nombran la IA por cada mil notas del año",
+      tip: i => `<strong>${A[i]}</strong><span>${nfc.format(+iaMil[i].toFixed(2))} por mil · ${n0(D.ia_por_anio[i])} de ${n0(D.notas_por_anio[i])} notas</span>`,
+    });
+    $("#ia-eventos").innerHTML = EVENTOS.map(e => `<li>${e.ref ? `<a class="cita" href="#ref-${e.ref}">${esc(e.t)}</a>` : esc(e.t)}</li>`).join("");
+    const totIA = D.ia_por_anio.reduce((a, b) => a + b, 0);
+    barras($("#ia-topicos"), D.ia_por_topico.slice(0, 11).map(([id, n]) => id < 0
+      ? { et: "<em>Sin tópico asignado</em>", v: n, txt: `${n0(n)} · ${pct(100 * n / totIA)}` }
+      : { id, et: esc(etiq(T.get(id), 3)), v: n, txt: `${n0(n)} · ${pct(100 * n / totIA)}` }), { clic: id => seleccionar(id, true) });
+    barras($("#ia-min"), D.ministerios.map((m, i) => ({ m, i })).filter(x => x.m.ia > 0).sort((a, b) => b.m.ia - a.m.ia).slice(0, 10)
+      .map(({ m }) => ({ et: esc(m.nombre), v: m.ia, txt: `${n0(m.ia)} · ${n1(1000 * m.ia / m.notas)} por mil` })));
+
+    /* ---------------- cifras del texto ---------------- */
+    const datosTexto = {
+      notas_total: n0(D.notas_total), notas: n0(D.notas), ministerios: n0(MIN.length),
+      fuentes: n0(D.fuentes || (D.organismos || []).length), topicos: n0(D.topicos.length),
+      autoridad: n0(D.topicos.filter(t => t.tipo === "autoridad").length),
+      sin_hdbscan: pct(D.sin_topico_hdbscan), sin_topico: pct(D.sin_topico),
+    };
+    document.querySelectorAll("[data-dato]").forEach(el => { if (datosTexto[el.dataset.dato] != null) el.textContent = datosTexto[el.dataset.dato]; });
+
+    /* ---------------- en breve ---------------- */
+    const topIA = candidatosIA[0];
+    const enTopIA = (D.ia_por_topico.find(([id]) => id === topIA.id) || [0, 0])[1];
+    const ir = t => `<button type="button" class="enlace" data-ir="${t.id}">${esc(etiq(t, 2))}</button>`;
+    const crecen3 = temas.filter(t => t.reciente >= 2).sort((a, b) => b.razon - a.razon).slice(0, 3);
+    const caen3 = temas.filter(t => t.antes >= 2).sort((a, b) => a.razon - b.razon).slice(0, 3);
+    const agenda = [...D.ministerios].sort((a, b) => b.agenda - a.agenda);
+    const pocaAgenda = agenda.filter(m => m.agenda < 1).map(m => m.nombre);
+    $("#breve").innerHTML = [
+      `Sin buscarlo, el modelo encuentra un tópico propio de inteligencia artificial (${ir(topIA)}, ${n0(topIA.notas)} notas): pasa de ${n1(topIA.antes)} a ${n1(topIA.reciente)} notas por mil entre 2018–2022 y 2023–2026, sobre todo en ${esc(minPrincipal(topIA))}.`,
+      `Pero la IA está más repartida que concentrada: de las ${n0(totIA)} notas que la nombran, ${n0(enTopIA)} (${pct(100 * enTopIA / totIA)}) caen en ese tópico; el resto la menciona dentro de otras agendas o queda sin tópico.`,
+      `Entre los tópicos que más crecen están ${crecen3.map(ir).join(", ")}; entre los que más caen, ${caen3.map(ir).join(", ")}.`,
+      `En ${esc(agenda[0].nombre)} (${pct(agenda[0].agenda)}) y ${esc(agenda[1].nombre)} (${pct(agenda[1].agenda)}) la prensa gira en torno a la agenda de la autoridad; en ${esc(pocaAgenda.slice(0, 3).join(", "))} casi no ocurre.`,
+    ].map(x => `<li>${x}</li>`).join("");
+    document.addEventListener("click", e => {
+      const b = e.target.closest("[data-ir]");
+      if (b) seleccionar(+b.dataset.ir, true);
+    });
+
+    /* ---------------- cobertura: notas por ministerio y año ---------------- */
+    const CORTES_COB = [1, 50, 150, 300, 600, 1000, 1500];
+    const claseCob = v => { let c = ""; CORTES_COB.forEach((k, i) => { if (v >= k) c = "s" + (i + 1); }); return c; };
+    const cob = $("#cobertura");
+    cob.style.setProperty("--n", NA);
+    cob.innerHTML = `<div class="fila cab" aria-hidden="true"><span>Ministerio</span>${A.map((a, i) =>
+      `<span>${i === 0 ? a : "’" + String(a).slice(2)}</span>`).join("")}<span style="text-align:right">Notas</span></div>` +
+      D.ministerios.map((m, i) => ({ m, i })).sort((a, b) => b.m.notas - a.m.notas).map(({ m, i }) =>
+        `<div class="fila" data-min="${i}"><span class="et">${esc(m.nombre)}</span>` +
+        m.por_anio.map((v, j) => `<span class="celda ${claseCob(v)}" data-i="${j}"></span>`).join("") +
+        `<span class="n">${n0(m.notas)}</span></div>`).join("");
+    cob.addEventListener("pointermove", e => {
+      const c = e.target.closest(".celda"); if (!c) { ocultarTip(); return; }
+      const m = D.ministerios[+c.closest(".fila").dataset.min], i = +c.dataset.i;
+      mostrarTip(`<strong>${esc(m.nombre)} · ${A[i]}</strong><span>${n0(m.por_anio[i])} notas</span>`, e);
+    });
+    cob.addEventListener("pointerleave", ocultarTip);
+    $("#escala-cob").innerHTML = "<span>Notas en el año:</span>" + CORTES_COB.map((k, i) =>
+      `<span><i class="s${i + 1}"></i>${i === CORTES_COB.length - 1 ? n0(k) + " o más" : n0(k) + "–" + n0(CORTES_COB[i + 1] - 1)}</span>`).join("") +
+      `<span><i style="background:var(--vacio)"></i>sin notas</span>`;
+
+    dibujarMapa();
+    dibujarFicha();
+    dibujarArbol();
+    dibujarLista();
+    dibujarBarrasMin();
+    dibujarPerfil();
+  }
+})();
+</script>
+
+</body>
+</html>

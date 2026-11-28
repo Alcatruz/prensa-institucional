@@ -519,8 +519,26 @@ def figuras():
 
 # ---------------------------------------------------------------- explorador
 EXPLORADOR = SALIDA / "explorador"
+WEB = RAIZ / "docs"         # página pública (GitHub Pages): solo resultados agregados
 PLANTILLA = Path(__file__).resolve().parent / "explorador_topicos.html"
 MARCA_DATOS = '<script id="datos" type="application/json"></script>'
+DESCRIPCION = ("Modelo de tópicos (BERTopic) sobre la prensa de los ministerios de Chile, 2014-2026: "
+               "método explicado paso a paso, resultados interactivos y referencias.")
+
+
+def pagina(destino: Path, datos_json: str | None = None):
+    """Escribe la plantilla como página completa. Con datos_json los incrusta (se abre sin servidor);
+    sin ellos, la página lee datos.json de su misma carpeta."""
+    plantilla = PLANTILLA.read_text(encoding="utf-8")
+    if datos_json is not None:
+        plantilla = plantilla.replace(MARCA_DATOS, MARCA_DATOS.replace("></", ">" + datos_json.replace("</", "<\\/") + "</"))
+    corte = plantilla.index("</style>") + len("</style>")
+    destino.write_text(
+        '<!doctype html>\n<html lang="es">\n<head>\n<meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+        f'<meta name="description" content="{DESCRIPCION}">\n'
+        + plantilla[:corte] + "\n</head>\n<body>\n" + plantilla[corte:].lstrip("\n") + "\n</body>\n</html>\n",
+        encoding="utf-8")
 
 
 def explorador(n_rep=5, n_rec=5):
@@ -612,18 +630,21 @@ def explorador(n_rep=5, n_rec=5):
         "agenda_por_anio": [round(100 * float(agenda[dr.anio == a].mean()), 1) for a in anios],
         "ia_por_anio": [int((dr.ia & (dr.anio == a)).sum()) for a in anios],
         "ia_por_topico": [[int(t), int(n)] for t, n in ia_top.items()],
-        "ministerios": mins, "organismos": organismos, "topicos": topicos,
+        "fuentes": len(organismos), "ministerios": mins, "organismos": organismos, "topicos": topicos,
     }
     EXPLORADOR.mkdir(exist_ok=True)
     texto = json.dumps(datos, ensure_ascii=False, separators=(",", ":"))
     (EXPLORADOR / "datos.json").write_text(texto, encoding="utf-8")
-    plantilla = PLANTILLA.read_text(encoding="utf-8")
-    html = plantilla.replace(MARCA_DATOS, MARCA_DATOS.replace("></", ">" + texto.replace("</", "<\\/") + "</"))
-    (EXPLORADOR / "index.html").write_text(
-        '<!doctype html>\n<html lang="es">\n<head>\n<meta charset="utf-8">\n'
-        '<meta name="viewport" content="width=device-width, initial-scale=1">\n</head>\n<body>\n'
-        + html + "\n</body>\n</html>\n", encoding="utf-8")
+    pagina(EXPLORADOR / "index.html", texto)
+    # versión pública: sin notas de ejemplo ni nombres de organismos (no se publica el texto de las notas)
+    publico = {k: v for k, v in datos.items() if k != "organismos"}
+    publico["topicos"] = [{k: v for k, v in t.items() if k not in ("representativas", "recientes")} for t in topicos]
+    WEB.mkdir(exist_ok=True)
+    texto_pub = json.dumps(publico, ensure_ascii=False, separators=(",", ":"))
+    (WEB / "datos.json").write_text(texto_pub, encoding="utf-8")
+    pagina(WEB / "index.html")
     print(f"{len(topicos)} tópicos, {len(texto) / 1e6:.1f} MB de datos:", EXPLORADOR / "index.html")
+    print(f"Versión pública ({len(texto_pub) / 1e6:.2f} MB de datos):", WEB / "index.html")
 
 
 if __name__ == "__main__":

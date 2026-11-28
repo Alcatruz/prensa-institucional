@@ -237,139 +237,348 @@ button.barra[aria-current="true"] { background: var(--accent-soft); }
 .tip strong { font-weight: 600; }
 .tip span { color: var(--ink-2); }
 .estado { padding: 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+
+/* texto explicativo */
+body { margin: 0; }
+[hidden] { display: none !important; }
+.capitulo { display: grid; gap: 24px; min-width: 0; scroll-margin-top: 16px; }
+.texto { max-width: 72ch; display: grid; gap: 14px; font-size: 1rem; line-height: 1.65; min-width: 0; }
+.texto h2 { font-size: 1.55rem; }
+.num-cap { color: var(--muted); font-weight: 500; margin-right: 0.45em; font-variant-numeric: tabular-nums; }
+.cita { color: var(--accent-ink); text-decoration: none; border-bottom: 1px solid var(--axis); }
+.cita:hover { border-bottom-color: currentColor; }
+.formula { font-size: 1.2rem; padding: 14px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; white-space: nowrap; }
+.aparte { font-size: 0.92rem; color: var(--ink-2); padding-left: 14px; border-left: 3px solid var(--line); }
+code { font-family: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace; font-size: 0.86em; background: var(--band); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.codigo { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; overflow-x: auto; font-size: 0.84rem; line-height: 1.6; }
+.codigo code { background: none; padding: 0; overflow-wrap: normal; }
+.lista { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; }
+.pasos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; counter-reset: paso; }
+.pasos li { counter-increment: paso; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; align-content: start; }
+.pasos li::before { content: counter(paso); font-size: 0.75rem; font-weight: 600; color: var(--accent-ink); background: var(--accent-soft); width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 4px; }
+.pasos span { font-size: 0.86rem; color: var(--ink-2); }
+.breve { display: grid; gap: 8px; max-width: 86ch; margin-top: 8px; }
+.breve ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.h-breve, .h-graf { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 500; }
+.h-graf { margin-bottom: 10px; }
+.toc ol { margin: 8px 0 0; padding-left: 1.6em; columns: 2 240px; column-gap: 32px; }
+.toc li { padding: 2px 0; break-inside: avoid; }
+.toc a { text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+.enlace { border: 0; background: none; padding: 0; color: var(--accent-ink); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; font: inherit; text-align: left; }
+.refs { margin: 0; padding-left: 1.4em; display: grid; gap: 12px; font-size: 0.92rem; line-height: 1.5; }
+.refs li { scroll-margin-top: 16px; overflow-wrap: anywhere; }
+.refs li:target { background: var(--accent-soft); border-radius: 6px; }
+.refs .aporte { display: block; color: var(--ink-2); font-size: 0.86rem; margin-top: 2px; }
+.calor.cob { min-width: 600px; }
+.calor.cob .fila { grid-template-columns: minmax(170px, 1fr) repeat(var(--n), 26px) 64px; }
+.sin-notas { font-size: 0.86rem; color: var(--ink-2); }
 </style>
 
 <main class="pagina" lang="es">
   <header class="cabecera">
     <p class="sobre">Prensa institucional · Ministerios de Chile · 2014–2026</p>
     <h1>Tópicos de la prensa ministerial</h1>
-    <p class="bajada">Un modelo de tópicos agrupa por contenido todas las notas de prensa de los ministerios y sus subsecretarías, sin buscar ningún tema de antemano. Aquí se puede ver qué tópicos existen, cuándo crecen o se apagan, cómo comunica cada ministerio y dónde aparece la inteligencia artificial.</p>
+    <p class="bajada">Qué comunican los ministerios de Chile, cómo cambia su agenda con los años y dónde aparece la inteligencia artificial. Esta página explica paso a paso cómo se construyó un modelo de tópicos sobre su prensa, muestra los resultados para explorarlos y discute sus límites a la luz de la literatura.</p>
     <dl class="cifras">
       <div><dt>Notas</dt><dd class="num" id="c-notas">—</dd></div>
       <div><dt>Ministerios</dt><dd class="num" id="c-min">—</dd></div>
       <div><dt>Tópicos</dt><dd class="num" id="c-top">—</dd></div>
       <div><dt>Notas sin tópico</dt><dd class="num" id="c-sin">—</dd></div>
     </dl>
+    <div class="breve panel">
+      <h2 class="h-breve">En breve</h2>
+      <ul id="breve"></ul>
+    </div>
+    <nav class="toc" aria-label="Contenido">
+      <h2 class="h-breve">Contenido</h2>
+      <ol>
+        <li><a href="#corpus">La pregunta y los datos</a></li>
+        <li><a href="#modelo">Qué es un modelo de tópicos</a></li>
+        <li><a href="#embeddings">De textos a vectores</a></li>
+        <li><a href="#agrupar">Reducir y agrupar: UMAP y HDBSCAN</a></li>
+        <li><a href="#ctfidf">Nombrar los tópicos: c-TF-IDF</a></li>
+        <li><a href="#resultado">El mapa de los tópicos</a></li>
+        <li><a href="#tiempo-cap">El peso de cada tópico en el tiempo</a></li>
+        <li><a href="#autoridad">Cómo comunica cada ministerio</a></li>
+        <li><a href="#ia-cap">La inteligencia artificial</a></li>
+        <li><a href="#validez">Qué tan confiable es esto</a></li>
+        <li><a href="#reproducir">Cómo reproducirlo</a></li>
+        <li><a href="#referencias">Referencias</a></li>
+      </ol>
+    </nav>
   </header>
 
   <p class="estado" id="estado" hidden></p>
 
-  <section class="bloque" id="explorar" aria-labelledby="t-explorar">
-    <header>
-      <h2 id="t-explorar">Mapa de tópicos</h2>
-      <p>Cada círculo es un tópico; los que están cerca tratan temas parecidos. El tamaño indica cuántas notas tiene y el color, cuánto cambió su peso entre 2018–2022 y 2023–2026. Haz clic en un tópico para ver su ficha.</p>
-    </header>
-    <div class="controles">
-      <label class="campo" for="buscar">Buscar palabra clave
-        <input id="buscar" type="search" placeholder="p. ej. litio, vacunación, datos" autocomplete="off">
-      </label>
-      <label class="campo" for="f-min">Ministerio
-        <select id="f-min"><option value="">Todos los ministerios</option></select>
-      </label>
-      <div class="campo">Tipo de tópico
-        <div class="seg" role="group" aria-label="Tipo de tópico" id="f-tipo">
-          <button type="button" data-tipo="todos" aria-pressed="true">Todos</button>
-          <button type="button" data-tipo="tema" aria-pressed="false">Temas</button>
-          <button type="button" data-tipo="autoridad" aria-pressed="false">Agenda de autoridad</button>
-        </div>
-      </div>
-      <p class="conteo" id="conteo" aria-live="polite"></p>
-    </div>
-    <div class="explorador">
-      <div class="panel mapa-panel">
-        <svg id="mapa" role="img" aria-label="Mapa de tópicos: cada círculo es un tópico, ubicado según su parecido con los demás"></svg>
-        <div class="leyenda" id="leyenda-mapa"></div>
-        <p class="nota-graf" id="nota-mapa">El tamaño es proporcional a la raíz del número de notas. Con un ministerio elegido, el tamaño cuenta solo sus notas.</p>
-      </div>
-      <article class="panel ficha" id="ficha" aria-live="polite"></article>
-    </div>
-  </section>
-
-  <section class="bloque" id="composicion" aria-labelledby="t-comp">
-    <header>
-      <h2 id="t-comp">Todos los tópicos, por ministerio</h2>
-      <p>Cada recuadro es un tópico y su área es proporcional a sus notas en el período elegido. Los tópicos se agrupan bajo el ministerio que más publica sobre ellos, y el color indica si crecieron o cayeron entre 2018–2022 y 2023–2026. Cambia el período para ver qué tópicos desaparecen y cuáles aparecen, haz clic en el nombre de un ministerio para ampliar su bloque o en un tópico para abrir su ficha.</p>
-    </header>
-    <div class="controles">
-      <div class="campo">Período
-        <div class="seg" role="group" aria-label="Período" id="f-periodo">
-          <button type="button" data-periodo="1" aria-pressed="true">2014–2026</button>
-          <button type="button" data-periodo="2" aria-pressed="false">2018–2022</button>
-          <button type="button" data-periodo="3" aria-pressed="false">2023–2026</button>
-        </div>
-      </div>
-      <label class="campo" for="f-arbol">Ver
-        <select id="f-arbol"><option value="">Todos los ministerios</option></select>
-      </label>
-    </div>
-    <div class="panel" style="display:grid;gap:12px">
-      <div class="arbol" id="arbol" role="img" aria-label="Todos los tópicos agrupados por ministerio principal; el área de cada recuadro es proporcional a sus notas"></div>
-      <div class="leyenda" id="leyenda-arbol"></div>
-      <p class="nota-graf" id="nota-arbol"></p>
-    </div>
-  </section>
-
-  <section class="bloque" id="tiempo" aria-labelledby="t-tiempo">
-    <header>
-      <h2 id="t-tiempo">Qué aparece y qué desaparece</h2>
-      <p>Peso de cada tópico año a año, en notas por cada mil notas ministeriales del año. Las listas comparan 2023–2026 con 2018–2022 y dejan fuera los tópicos centrados en una autoridad. Haz clic en una fila para abrir su ficha.</p>
-    </header>
-    <div class="controles">
-      <div class="seg" role="group" aria-label="Lista de tópicos" id="f-lista">
-        <button type="button" data-lista="crecen" aria-pressed="true">Los que más crecen</button>
-        <button type="button" data-lista="caen" aria-pressed="false">Los que más caen</button>
-        <button type="button" data-lista="ia" aria-pressed="false">IA y transformación digital</button>
-        <button type="button" data-lista="todos" aria-pressed="false">Todos los tópicos</button>
-      </div>
+  <section class="capitulo" id="corpus" aria-labelledby="h-corpus">
+    <div class="texto">
+      <h2 id="h-corpus"><span class="num-cap">1</span>La pregunta y los datos</h2>
+      <p>Este proyecto reúne la prensa institucional de los organismos obligados por la Ley de Transparencia para estudiar cómo el Estado de Chile comunica y promueve la inteligencia artificial, entendida en sentido amplio: también los algoritmos, la automatización y la transformación digital. El análisis parte por los ministerios: <b data-dato="notas_total">—</b> notas de prensa de <b data-dato="ministerios">—</b> ministerios y sus subsecretarías, publicadas en <b data-dato="fuentes">—</b> sitios web y extraídas con su texto completo. Antes de modelar se quitaron las notas repetidas (mismo título y fecha) y las de menos de 20 palabras.</p>
+      <p>En vez de buscar directamente las notas que hablan de IA, la pregunta de partida es más amplia: ¿de qué hablan los ministerios? Si la IA se volvió un tema propio de la comunicación del Estado, debería aparecer como un tópico entre muchos otros y ganar peso con los años. Dejar que los temas surjan de los textos antes de decidir qué medir es la forma de exploración que recomienda la literatura de «texto como datos» (<a class="cita" href="#ref-grimmer2013">Grimmer y Stewart, 2013</a>; <a class="cita" href="#ref-grimmer2022">Grimmer, Roberts y Stewart, 2022</a>), y los comunicados de prensa ya se han usado así para medir la agenda que expresan los actores políticos (<a class="cita" href="#ref-grimmer2010">Grimmer, 2010</a>).</p>
+      <p>Los archivos no cubren lo mismo. Muchos sitios conservan notas solo desde 2018, Seguridad Pública tiene notas desde 2025 y el archivo de Salud tiene muchas menos notas desde 2023. El gráfico muestra cuántas notas hay por ministerio y año; esa desigualdad obliga a las precauciones que se explican en la sección 7.</p>
     </div>
     <div class="panel">
-      <div class="calor-cont"><div class="calor" id="calor"></div></div>
-      <div class="escala" id="escala" style="margin-top:12px"></div>
+      <h3 class="h-graf">Notas por ministerio y año</h3>
+      <div class="calor-cont"><div class="calor cob" id="cobertura"></div></div>
+      <div class="escala" id="escala-cob" style="margin-top:12px"></div>
     </div>
   </section>
 
-  <section class="bloque" id="ministerios" aria-labelledby="t-min">
-    <header>
-      <h2 id="t-min">Cómo comunica cada ministerio</h2>
-      <p>Algunos ministerios organizan su prensa en torno a la agenda de su autoridad (reuniones, visitas, viajes); otros, en torno a programas y políticas. La barra muestra la parte de sus notas que cae en tópicos encabezados por el apellido de un ministro, ministra o subsecretario. Elige un ministerio para ver su perfil.</p>
-    </header>
-    <div class="dos">
+  <section class="capitulo" id="modelo" aria-labelledby="h-modelo">
+    <div class="texto">
+      <h2 id="h-modelo"><span class="num-cap">2</span>Qué es un modelo de tópicos</h2>
+      <p>Un modelo de tópicos agrupa documentos que hablan de lo mismo sin que nadie defina antes los temas. El modelo clásico, LDA (<a class="cita" href="#ref-blei2003">Blei, Ng y Jordan, 2003</a>), supone que cada documento es una mezcla de tópicos y cada tópico, una distribución de probabilidad sobre las palabras. Sus extensiones permiten que el peso de los tópicos dependa de variables como la fecha o el autor (<a class="cita" href="#ref-roberts2014">Roberts et al., 2014</a>) o que las palabras de cada tópico cambien con el tiempo (<a class="cita" href="#ref-blei2006">Blei y Lafferty, 2006</a>). En sociología se han leído como una forma de describir a gran escala los marcos con que se habla de un tema (<a class="cita" href="#ref-dimaggio2013">DiMaggio, Nag y Blei, 2013</a>).</p>
+      <p>Aquí se usa BERTopic (<a class="cita" href="#ref-grootendorst2022">Grootendorst, 2022</a>), que sigue otro camino: primero representa cada nota con un vector que resume su significado, después agrupa los vectores parecidos y solo al final busca las palabras que distinguen a cada grupo. Funciona bien con textos cortos y en castellano; en una comparación con publicaciones de Twitter, BERTopic y NMF dieron tópicos más claros que LDA (<a class="cita" href="#ref-egger2022">Egger y Yu, 2022</a>), aunque las notas de prensa son textos más largos. A cambio, asigna un solo tópico a cada nota y depende de varias decisiones que conviene hacer explícitas. El proceso tiene seis pasos:</p>
+    </div>
+    <ol class="pasos" aria-label="Pasos del modelo">
+      <li><b>Texto</b><span>Título y primeras 100 palabras de cada nota</span></li>
+      <li><b>Vector</b><span>384 números por nota con un modelo de lenguaje multilingüe</span></li>
+      <li><b>UMAP</b><span>De 384 a 5 dimensiones, conservando qué notas son vecinas</span></li>
+      <li><b>HDBSCAN</b><span>Grupos densos de al menos 40 notas; el resto queda como ruido</span></li>
+      <li><b>c-TF-IDF</b><span>Las palabras que distinguen a cada grupo de los demás</span></li>
+      <li><b>Series</b><span>Peso de cada tópico por año y por ministerio</span></li>
+    </ol>
+  </section>
+
+  <section class="capitulo" id="embeddings" aria-labelledby="h-emb">
+    <div class="texto">
+      <h2 id="h-emb"><span class="num-cap">3</span>De textos a vectores</h2>
+      <p>Un <i>embedding</i> de oraciones es una lista de números construida de modo que textos con significado parecido queden cerca, aunque no compartan palabras: «subsidio para pagar la luz» y «rebaja en la cuenta de electricidad» terminan en puntos vecinos. Sentence-BERT adapta un modelo de lenguaje del tipo BERT para producir estos vectores de forma rápida (<a class="cita" href="#ref-reimers2019">Reimers y Gurevych, 2019</a>), y su versión multilingüe se entrena para que frases equivalentes en distintos idiomas, incluido el castellano, caigan en el mismo lugar (<a class="cita" href="#ref-reimers2020">Reimers y Gurevych, 2020</a>).</p>
+      <p>El modelo usado, <code>paraphrase-multilingual-MiniLM-L12-v2</code>, es pequeño: corre en un computador sin tarjeta gráfica y entrega 384 números por texto. Solo lee las primeras 128 piezas de palabra, unas 100 palabras, así que cada nota se representa con su título y su primer párrafo, que en una nota de prensa suelen concentrar el tema. Calcular los vectores de todas las notas tomó unos 50 minutos.</p>
+    </div>
+  </section>
+
+  <section class="capitulo" id="agrupar" aria-labelledby="h-agrupar">
+    <div class="texto">
+      <h2 id="h-agrupar"><span class="num-cap">4</span>Reducir y agrupar: UMAP y HDBSCAN</h2>
+      <p>Agrupar directamente en 384 dimensiones funciona mal: en espacios tan grandes las distancias entre puntos tienden a parecerse y cuesta distinguir zonas densas. Por eso BERTopic reduce primero las dimensiones con UMAP (<a class="cita" href="#ref-mcinnes2018">McInnes, Healy y Melville, 2018</a>), un método que conserva la estructura de vecindad: las notas que eran vecinas en 384 dimensiones siguen siéndolo en 5. Se usaron 15 vecinos, distancia coseno y una distancia mínima de cero, que deja los grupos compactos.</p>
+      <p>Después, HDBSCAN busca zonas densas en ese espacio (<a class="cita" href="#ref-campello2013">Campello, Moulavi y Sander, 2013</a>; <a class="cita" href="#ref-mcinnes2017">McInnes, Healy y Astels, 2017</a>). A diferencia de k-medias, no hay que fijar cuántos grupos habrá ni obliga a meter cada nota en uno: las que quedan en zonas poco densas se marcan como ruido. Los parámetros son el tamaño mínimo de un tópico (40 notas) y cuán exigente es el algoritmo para considerar densa una zona (10 vecinos).</p>
+      <p>Una decisión cambió bastante los resultados. HDBSCAN construye una jerarquía de grupos y puede quedarse con los más estables (la opción por defecto, <i>eom</i>) o con las hojas de esa jerarquía (<i>leaf</i>), una opción de la librería <code>hdbscan</code> (<a class="cita" href="#ref-mcinnes2017">McInnes, Healy y Astels, 2017</a>). Con la primera, ministerios como Culturas o Deporte caían casi enteros en un solo tópico, porque todas sus notas se parecen entre sí más que a las de otros ministerios. Con las hojas los tópicos son más finos y temáticos.</p>
+      <p><b>Notas sin tópico.</b> HDBSCAN dejó como ruido el <b data-dato="sin_hdbscan">—</b> de las notas. Para recuperar las que sí se parecen a algún tópico, cada una se compara con el centro de cada tópico (similitud coseno) y se asigna al más parecido solo si se parece a él al menos tanto como las notas propias del tópico, medido con el percentil 25 de sus similitudes. Quedan sin tópico el <b data-dato="sin_topico">—</b> de las notas de 2014–2026: notas genéricas o de temas demasiado pequeños para formar un grupo.</p>
+    </div>
+  </section>
+
+  <section class="capitulo" id="ctfidf" aria-labelledby="h-ctfidf">
+    <div class="texto">
+      <h2 id="h-ctfidf"><span class="num-cap">5</span>Nombrar los tópicos: c-TF-IDF</h2>
+      <p>Un grupo de notas no dice de qué trata. BERTopic lo nombra con una variante de TF-IDF que trata cada tópico como si fuera un solo documento grande (<a class="cita" href="#ref-grootendorst2022">Grootendorst, 2022</a>). El peso de una palabra <var>t</var> en el tópico <var>c</var> es</p>
+      <p class="formula" role="math" aria-label="W sub t c igual a tf sub t c por logaritmo de 1 más A sobre f sub t">W<sub>t,c</sub> = tf<sub>t,c</sub> × log(1 + A / f<sub>t</sub>)</p>
+      <p>donde tf<sub>t,c</sub> es cuántas veces aparece la palabra en las notas del tópico, f<sub>t</sub> cuántas veces aparece en todo el corpus y A el promedio de palabras por tópico. Una palabra pesa mucho si es frecuente en el tópico y rara en el resto. Además, la frecuencia dentro del tópico se suaviza con una raíz cuadrada para que las palabras muy repetidas no dominen. Para contar se usan las primeras 600 palabras de cada nota.</p>
+      <p>Antes de contar se sacan las palabras vacías: las listas del castellano de NLTK y Snowball, los meses y los días, los verbos de cita propios de la prensa («señaló», «destacó», «agregó») y las palabras que aparecen en más de una de cada cuatro notas, como «gobierno», «ministro» o «región», que no distinguen ningún tema. Se cuentan palabras sueltas y pares de palabras («pequeña minería», «transformación digital») presentes en al menos 10 notas. Cada tópico se nombra con sus primeras palabras clave; no son títulos puestos a mano.</p>
+      <p class="aparte">Un detalle técnico que conviene saber: con la configuración por defecto, pensada para el inglés, BERTopic borra los caracteres que no son ASCII antes de contar, y «educación» pasaba a ser «educacin». Se usó la configuración multilingüe.</p>
+    </div>
+  </section>
+
+  <section class="capitulo" id="resultado" aria-labelledby="h-resultado">
+    <div class="texto">
+      <h2 id="h-resultado"><span class="num-cap">6</span>El mapa de los tópicos</h2>
+      <p>El resultado son <b data-dato="topicos">—</b> tópicos. En el mapa, cada uno se ubica según el centro de sus notas, proyectado a dos dimensiones con UMAP: la cercanía indica parecido, pero las distancias son aproximadas y los ejes no tienen unidades. Al elegir un tópico se abre su ficha, con sus palabras clave, su peso año a año y los ministerios que publican en él.</p>
+    </div>
+
+    <section class="bloque" id="explorar" aria-labelledby="t-explorar">
+      <header>
+        <h3 id="t-explorar">Mapa de tópicos</h3>
+        <p>Cada círculo es un tópico; el tamaño indica cuántas notas tiene y el color, cuánto cambió su peso entre 2018–2022 y 2023–2026. Haz clic en un tópico para ver su ficha.</p>
+      </header>
+      <div class="controles">
+        <label class="campo" for="buscar">Buscar palabra clave
+          <input id="buscar" type="search" placeholder="p. ej. litio, vacunación, datos" autocomplete="off">
+        </label>
+        <label class="campo" for="f-min">Ministerio
+          <select id="f-min"><option value="">Todos los ministerios</option></select>
+        </label>
+        <div class="campo">Tipo de tópico
+          <div class="seg" role="group" aria-label="Tipo de tópico" id="f-tipo">
+            <button type="button" data-tipo="todos" aria-pressed="true">Todos</button>
+            <button type="button" data-tipo="tema" aria-pressed="false">Temas</button>
+            <button type="button" data-tipo="autoridad" aria-pressed="false">Agenda de autoridad</button>
+          </div>
+        </div>
+        <p class="conteo" id="conteo" aria-live="polite"></p>
+      </div>
+      <div class="explorador">
+        <div class="panel mapa-panel">
+          <svg id="mapa" role="img" aria-label="Mapa de tópicos: cada círculo es un tópico, ubicado según su parecido con los demás"></svg>
+          <div class="leyenda" id="leyenda-mapa"></div>
+          <p class="nota-graf" id="nota-mapa">El tamaño es proporcional a la raíz del número de notas. Con un ministerio elegido, el tamaño cuenta solo sus notas.</p>
+        </div>
+        <article class="panel ficha" id="ficha" aria-live="polite"></article>
+      </div>
+    </section>
+
+    <section class="bloque" id="composicion" aria-labelledby="t-comp">
+      <header>
+        <h3 id="t-comp">Todos los tópicos, por ministerio</h3>
+        <p>La misma información como mapa de árbol. Cada recuadro es un tópico y su área es proporcional a sus notas en el período elegido; los tópicos se agrupan bajo el ministerio que más publica sobre ellos. Cambia el período para ver qué tópicos desaparecen y cuáles aparecen, haz clic en el nombre de un ministerio para ampliar su bloque o en un tópico para abrir su ficha.</p>
+      </header>
+      <div class="controles">
+        <div class="campo">Período
+          <div class="seg" role="group" aria-label="Período" id="f-periodo">
+            <button type="button" data-periodo="1" aria-pressed="true">2014–2026</button>
+            <button type="button" data-periodo="2" aria-pressed="false">2018–2022</button>
+            <button type="button" data-periodo="3" aria-pressed="false">2023–2026</button>
+          </div>
+        </div>
+        <label class="campo" for="f-arbol">Ver
+          <select id="f-arbol"><option value="">Todos los ministerios</option></select>
+        </label>
+      </div>
+      <div class="panel" style="display:grid;gap:12px">
+        <div class="arbol" id="arbol" role="img" aria-label="Todos los tópicos agrupados por ministerio principal; el área de cada recuadro es proporcional a sus notas"></div>
+        <div class="leyenda" id="leyenda-arbol"></div>
+        <p class="nota-graf" id="nota-arbol"></p>
+      </div>
+    </section>
+  </section>
+
+  <section class="capitulo" id="tiempo-cap" aria-labelledby="h-tiempo">
+    <div class="texto">
+      <h2 id="h-tiempo"><span class="num-cap">7</span>El peso de cada tópico en el tiempo</h2>
+      <p>Para comparar años con distinta cantidad de notas, el peso de un tópico se mide en notas por cada mil notas ministeriales del año. Es la misma lógica de los estudios de atención política, que siguen qué proporción de los discursos dedica cada actor a cada tema para ver cómo se mueve la agenda (<a class="cita" href="#ref-quinn2010">Quinn et al., 2010</a>). Con una idea parecida, <a class="cita" href="#ref-greene2017">Greene y Cross (2017)</a> siguieron la agenda del Parlamento Europeo entre 1999 y 2014 y mostraron cómo la atención responde a shocks externos; en estos datos, la pandemia cumple ese papel.</p>
+      <p>Esa cifra mezcla dos cosas: cuánto habla cada ministerio de un tema y cuántas notas publica cada ministerio, que a su vez depende de qué tan completo es su archivo. Por eso se calcula también una versión en que cada ministerio pesa igual: el promedio, entre los ministerios con notas ese año, de la fracción de sus notas que cae en el tópico. Si un tópico crece en las dos versiones, el cambio no se explica solo porque entraron o salieron fuentes.</p>
+      <p>Para decir si un tópico crece se compara su promedio anual de 2023–2026 con el de 2018–2022, el primer período en que casi todos los ministerios tienen archivo. A los dos promedios se les suma 0,5 antes de dividir, para que un tópico que pasa de 0,1 a 0,4 por mil no aparezca como si se hubiera cuadruplicado. Con esa razón se colorean los gráficos: <i>se duplica o más</i> (2 o más), <i>crece</i> (entre 1,32 y 2), <i>estable</i> (entre 0,76 y 1,32), <i>cae</i> (entre 0,5 y 0,76) y <i>cae a menos de la mitad</i>. Otra opción habría sido un modelo dinámico, en que las palabras de cada tópico cambian año a año (<a class="cita" href="#ref-blei2006">Blei y Lafferty, 2006</a>); aquí los tópicos son fijos y lo que cambia es su peso.</p>
+    </div>
+    <section class="bloque" id="tiempo" aria-labelledby="t-tiempo">
+      <header>
+        <h3 id="t-tiempo">Qué aparece y qué desaparece</h3>
+        <p>Peso de cada tópico año a año, en notas por cada mil notas ministeriales del año. Las listas dejan fuera los tópicos centrados en una autoridad. Haz clic en una fila para abrir su ficha.</p>
+      </header>
+      <div class="controles">
+        <div class="seg" role="group" aria-label="Lista de tópicos" id="f-lista">
+          <button type="button" data-lista="crecen" aria-pressed="true">Los que más crecen</button>
+          <button type="button" data-lista="caen" aria-pressed="false">Los que más caen</button>
+          <button type="button" data-lista="ia" aria-pressed="false">IA y transformación digital</button>
+          <button type="button" data-lista="todos" aria-pressed="false">Todos los tópicos</button>
+        </div>
+      </div>
       <div class="panel">
-        <h4 style="margin-bottom:10px">Notas en tópicos de agenda de autoridad, 2014–2026</h4>
-        <div class="barras" id="barras-min"></div>
+        <div class="calor-cont"><div class="calor" id="calor"></div></div>
+        <div class="escala" id="escala" style="margin-top:12px"></div>
       </div>
-      <article class="panel perfil" id="perfil" aria-live="polite"></article>
+    </section>
+  </section>
+
+  <section class="capitulo" id="autoridad" aria-labelledby="h-autoridad">
+    <div class="texto">
+      <h2 id="h-autoridad"><span class="num-cap">8</span>Cómo comunica cada ministerio</h2>
+      <p>Al leer los tópicos aparece un patrón: algunos se encabezan con el apellido de un ministro y agrupan su agenda (reuniones, visitas, viajes, entrevistas) sin un tema de política detrás. La literatura de comunicación política llama personalización a este desplazamiento del foco desde las instituciones y las políticas hacia las personas que las encabezan (<a class="cita" href="#ref-rahat2007">Rahat y Sheafer, 2007</a>; <a class="cita" href="#ref-vanaelst2012">Van Aelst, Sheafer y Stanyer, 2012</a>). Rahat y Sheafer distinguen la personalización de las instituciones, la de los medios y la del comportamiento de los propios políticos; lo que se mide aquí se acerca a la última, porque es el ministerio el que pone a su autoridad al centro de lo que comunica. Cuando ese foco se concentra en el Presidente y unos pocos líderes se habla de personalización centralizada (<a class="cita" href="#ref-balmas2014">Balmas et al., 2014</a>). En Chile, la personalización se ha estudiado sobre todo en la cobertura de prensa de las campañas presidenciales (<a class="cita" href="#ref-porath2014">Porath, Suzuki y Ramdohr, 2014</a>), más que en la comunicación de los propios ministerios.</p>
+      <p>La medida usada es simple: un tópico es de agenda de autoridad cuando su primera palabra clave, o dos de las cuatro primeras, contienen el apellido de un ministro o ministra de 2006–2026, de un presidente o de un subsecretario. La lista se revisó a mano para descartar apellidos que también son palabras comunes o nombres de otra cosa, como Mesa, Ríos o Iglesias. Con esta regla, <b data-dato="autoridad">—</b> de los <b data-dato="topicos">—</b> tópicos son de agenda de autoridad. Es una medida gruesa: no capta las notas centradas en la autoridad que caen en tópicos temáticos, pero basta para mostrar estilos de comunicación muy distintos entre ministerios. Tampoco equivale a una «campaña permanente»: comunicar la agenda de una autoridad es parte de gobernar, que tiene otros plazos y otra lógica que una campaña (<a class="cita" href="#ref-rispolo2020">Ríspolo, 2020</a>).</p>
+    </div>
+    <section class="bloque" id="ministerios" aria-labelledby="t-min">
+      <header>
+        <h3 id="t-min">Agenda de autoridad y perfil de cada ministerio</h3>
+        <p>La barra muestra la parte de las notas de cada ministerio que cae en tópicos de agenda de autoridad. Elige un ministerio para ver cuántas notas tiene por año y sus tópicos principales.</p>
+      </header>
+      <div class="dos">
+        <div class="panel">
+          <h4 style="margin-bottom:10px">Notas en tópicos de agenda de autoridad, 2014–2026</h4>
+          <div class="barras" id="barras-min"></div>
+        </div>
+        <article class="panel perfil" id="perfil" aria-live="polite"></article>
+      </div>
+    </section>
+  </section>
+
+  <section class="capitulo" id="ia-cap" aria-labelledby="h-ia">
+    <div class="texto">
+      <h2 id="h-ia"><span class="num-cap">9</span>La inteligencia artificial</h2>
+      <p>Para seguir la IA se usó, además del modelo, un diccionario: una nota la nombra si menciona inteligencia artificial, la sigla IA, <i>machine learning</i>, <i>deep learning</i>, redes neuronales, ChatGPT, chatbots, aprendizaje automático o modelos de lenguaje. Los diccionarios son transparentes pero frágiles (<a class="cita" href="#ref-grimmer2013">Grimmer y Stewart, 2013</a>): la sigla IA también aparece en iniciales y siglas de otras cosas, así que solo se cuenta en mayúsculas y sin puntos.</p>
+      <p>Comparar las dos medidas es lo más interesante. El modelo encuentra, sin que nadie se lo pida, un tópico propio de inteligencia artificial, pero la mayoría de las notas que nombran la IA están en otros tópicos: la IA es un tema en sí mismo para un núcleo pequeño de notas, sobre todo del Ministerio de Ciencia, y una referencia dentro de las agendas de ciencia, cancillería, educación o defensa. Los estudios sobre estrategias nacionales de IA muestran que el Estado se asigna a la vez el papel de promotor y el de regulador de la tecnología (<a class="cita" href="#ref-papyshev2023">Papyshev y Yarime, 2023</a>; <a class="cita" href="#ref-ulnicane2021">Ulnicane et al., 2021</a>), y que esos planes combinan la modernización del sector público con la gobernanza de datos y algoritmos (<a class="cita" href="#ref-fatima2020">Fatima, Desouza y Dawson, 2020</a>). Una tipología de los usos de la IA en el sector público (<a class="cita" href="#ref-wirtz2019">Wirtz, Weyerer y Geyer, 2019</a>) serviría como siguiente paso para clasificar qué usos promueve cada ministerio. En la prensa, la IA se ha encuadrado sobre todo desde los negocios y la tecnología, con más beneficios que riesgos (<a class="cita" href="#ref-chuan2019">Chuan, Tsai y Cho, 2019</a>); en medios de Costa Rica el encuadre pasó de explicar la tecnología a discutir sus impactos y su ética (<a class="cita" href="#ref-tristan2026">Tristán Jiménez y Lizano Quirós, 2026</a>), y en la prensa comercial chilena un estudio reciente revisa más de doce mil noticias sobre IA (<a class="cita" href="#ref-humeres2026">Humeres et al., 2026</a>). Este análisis agrega a esa discusión la voz del propio Estado.</p>
+    </div>
+    <section class="bloque" id="ia" aria-labelledby="t-ia">
+      <header>
+        <h3 id="t-ia">Dónde aparece la inteligencia artificial</h3>
+        <p>Notas ministeriales que nombran la IA, en qué tópicos caen y qué ministerios las publican. Los números marcan hitos de la política digital y de IA en Chile.</p>
+      </header>
+      <div class="dos">
+        <div class="panel" style="display:grid;gap:10px">
+          <h4>Notas que nombran la IA, por cada mil notas del año</h4>
+          <div id="ia-linea"></div>
+          <ol class="eventos" id="ia-eventos"></ol>
+        </div>
+        <div class="panel" style="display:grid;gap:18px">
+          <div style="display:grid;gap:10px">
+            <h4>En qué tópicos caen esas notas</h4>
+            <div class="barras" id="ia-topicos"></div>
+          </div>
+          <div style="display:grid;gap:10px">
+            <h4>Qué ministerios las publican</h4>
+            <div class="barras" id="ia-min"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <section class="capitulo" id="validez" aria-labelledby="h-validez">
+    <div class="texto">
+      <h2 id="h-validez"><span class="num-cap">10</span>Qué tan confiable es esto</h2>
+      <p>Un modelo de tópicos es una herramienta de lectura, no una medida terminada. La regla que resume la literatura es validar siempre (<a class="cita" href="#ref-grimmer2013">Grimmer y Stewart, 2013</a>): las palabras clave no bastan para saber qué captura un tópico, las personas interpretan unos tópicos mucho mejor que otros (<a class="cita" href="#ref-chang2009">Chang et al., 2009</a>) y antes de usar un tópico como medida de un concepto conviene comprobar, leyendo notas, que de verdad corresponde a ese concepto (<a class="cita" href="#ref-ying2022">Ying, Montgomery y Stewart, 2022</a>). Por eso cada ficha muestra notas de ejemplo en la versión local del explorador. Las advertencias principales:</p>
+      <ul class="lista">
+        <li><b>Una sola etiqueta por nota.</b> Una nota sobre IA en la educación cae en un solo tópico, aunque toque dos temas.</li>
+        <li><b>Parámetros y azar.</b> Con otro tamaño mínimo de tópico habría más o menos tópicos, y UMAP depende de una semilla aleatoria (fijada en 42 para poder repetir el resultado). Los patrones gruesos, como el tópico de IA o la caída de los tópicos de la pandemia, deberían mantenerse; los tópicos pequeños pueden cambiar.</li>
+        <li><b>Archivos desiguales.</b> No todos los ministerios tienen notas desde 2014 (sección 1), y 2026 llega hasta noviembre.</li>
+        <li><b>Etiquetas automáticas.</b> Los nombres son las primeras palabras clave; hay que leer las notas antes de interpretar un tópico.</li>
+        <li><b>Prensa no es política.</b> Lo que un ministerio publica es lo que decide comunicar, no todo lo que hace.</li>
+      </ul>
     </div>
   </section>
 
-  <section class="bloque" id="ia" aria-labelledby="t-ia">
-    <header>
-      <h2 id="t-ia">Dónde aparece la inteligencia artificial</h2>
-      <p>Notas ministeriales que nombran la IA (inteligencia artificial, la sigla IA, machine learning, ChatGPT, chatbots o modelos de lenguaje). Solo una parte cae en el tópico propio de IA; el resto la menciona dentro de otras agendas.</p>
-    </header>
-    <div class="dos">
-      <div class="panel" style="display:grid;gap:10px">
-        <h4>Notas que nombran la IA, por cada mil notas del año</h4>
-        <div id="ia-linea"></div>
-        <ol class="eventos" id="ia-eventos"></ol>
-      </div>
-      <div class="panel" style="display:grid;gap:18px">
-        <div style="display:grid;gap:10px">
-          <h4>En qué tópicos caen esas notas</h4>
-          <div class="barras" id="ia-topicos"></div>
-        </div>
-        <div style="display:grid;gap:10px">
-          <h4>Qué ministerios las publican</h4>
-          <div class="barras" id="ia-min"></div>
-        </div>
-      </div>
+  <section class="capitulo" id="reproducir" aria-labelledby="h-reproducir">
+    <div class="texto">
+      <h2 id="h-reproducir"><span class="num-cap">11</span>Cómo reproducirlo</h2>
+      <p>Todo el análisis está en <code>analisis/topicos_ministerios.py</code>, que se corre por etapas. Cada una guarda su resultado en <code>data/topicos_ministerios/</code>, una carpeta que no se publica porque contiene el texto de las notas.</p>
+      <pre class="codigo"><code>python analisis/topicos_ministerios.py preparar     # junta las notas y quita duplicados
+python analisis/topicos_ministerios.py embeber      # vectores de cada nota (unos 50 minutos)
+python analisis/topicos_ministerios.py modelar      # UMAP + HDBSCAN + c-TF-IDF
+python analisis/topicos_ministerios.py analizar     # tablas por año y por ministerio
+python analisis/topicos_ministerios.py figuras      # figuras estáticas del README
+python analisis/topicos_ministerios.py explorador   # esta página y su versión local</code></pre>
+      <p>La etapa <code>explorador</code> escribe dos versiones de esta página. La del repositorio (<code>docs/</code>) usa solo resultados agregados: palabras clave, series por año y conteos por ministerio. La versión local (<code>data/topicos_ministerios/explorador/index.html</code>) incluye además notas de ejemplo de cada tópico, con su título y su enlace.</p>
     </div>
   </section>
 
-  <section class="bloque" id="metodo" aria-labelledby="t-metodo">
-    <header><h2 id="t-metodo">Cómo se hizo</h2></header>
-    <div class="metodo" id="metodo-texto"></div>
-    <p class="pie">Código del análisis: <a href="https://github.com/Alcatruz/prensa-institucional" target="_blank" rel="noopener">github.com/Alcatruz/prensa-institucional</a> (los datos no se publican en el repositorio).</p>
+  <section class="capitulo" id="referencias" aria-labelledby="h-referencias">
+    <div class="texto">
+      <h2 id="h-referencias">Referencias</h2>
+      <ol class="refs" id="lista-refs">
+        <li id="ref-balmas2014">Balmas, M., Rahat, G., Sheafer, T., y Shenhav, S. R. (2014). Two routes to personalized politics: Centralized and decentralized personalization. <i>Party Politics, 20</i>(1), 37–51. <a href="https://doi.org/10.1177/1354068811436037" target="_blank" rel="noopener">doi.org/10.1177/1354068811436037</a><span class="aporte">Distingue la personalización centralizada, en pocos líderes, de la descentralizada.</span></li>
+        <li id="ref-blei2006">Blei, D. M., y Lafferty, J. D. (2006). Dynamic topic models. En <i>Proceedings of the 23rd International Conference on Machine Learning</i> (pp. 113–120). ACM. <a href="https://doi.org/10.1145/1143844.1143859" target="_blank" rel="noopener">doi.org/10.1145/1143844.1143859</a><span class="aporte">Tópicos cuyo vocabulario cambia en el tiempo; la alternativa a medir solo el peso de tópicos fijos.</span></li>
+        <li id="ref-blei2003">Blei, D. M., Ng, A. Y., y Jordan, M. I. (2003). Latent Dirichlet allocation. <i>Journal of Machine Learning Research, 3</i>, 993–1022. <a href="https://www.jmlr.org/papers/v3/blei03a.html" target="_blank" rel="noopener">www.jmlr.org/papers/v3/blei03a.html</a><span class="aporte">El modelo de tópicos clásico: cada documento es una mezcla de tópicos.</span></li>
+        <li id="ref-campello2013">Campello, R. J. G. B., Moulavi, D., y Sander, J. (2013). Density-based clustering based on hierarchical density estimates. En J. Pei et al. (Eds.), <i>Advances in Knowledge Discovery and Data Mining: PAKDD 2013</i> (Lecture Notes in Computer Science, vol. 7819, pp. 160–172). Springer. <a href="https://doi.org/10.1007/978-3-642-37456-2_14" target="_blank" rel="noopener">doi.org/10.1007/978-3-642-37456-2_14</a><span class="aporte">Define HDBSCAN: grupos por densidad y notas sin grupo como ruido.</span></li>
+        <li id="ref-chang2009">Chang, J., Gerrish, S., Wang, C., Boyd-Graber, J., y Blei, D. M. (2009). Reading tea leaves: How humans interpret topic models. En <i>Advances in Neural Information Processing Systems 22</i> (NIPS 2009). Curran Associates. <a href="https://papers.nips.cc/paper/2009/hash/f92586a25bb3145facd64ab20fd554ff-Abstract.html" target="_blank" rel="noopener">papers.nips.cc/paper/2009/hash/f92586a25bb3145facd64ab20fd554ff-Abstract.html</a><span class="aporte">Pruebas con personas que muestran que el mejor ajuste estadístico no garantiza tópicos interpretables.</span></li>
+        <li id="ref-chuan2019">Chuan, C.-H., Tsai, W.-H. S., y Cho, S. Y. (2019). Framing artificial intelligence in American newspapers. En <i>Proceedings of the 2019 AAAI/ACM Conference on AI, Ethics, and Society</i> (pp. 339–344). ACM. <a href="https://doi.org/10.1145/3306618.3314285" target="_blank" rel="noopener">doi.org/10.1145/3306618.3314285</a><span class="aporte">Cinco diarios de EE. UU., 2009–2018: predominan los negocios y la tecnología, y los beneficios sobre los riesgos.</span></li>
+        <li id="ref-dimaggio2013">DiMaggio, P., Nag, M., y Blei, D. (2013). Exploiting affinities between topic modeling and the sociological perspective on culture: Application to newspaper coverage of U.S. government arts funding. <i>Poetics, 41</i>(6), 570–606. <a href="https://doi.org/10.1016/j.poetic.2013.08.004" target="_blank" rel="noopener">doi.org/10.1016/j.poetic.2013.08.004</a><span class="aporte">Lee los tópicos como marcos culturales en la cobertura de una política pública y propone validarlos desde varios ángulos.</span></li>
+        <li id="ref-egger2022">Egger, R., y Yu, J. (2022). A topic modeling comparison between LDA, NMF, Top2Vec, and BERTopic to demystify Twitter posts. <i>Frontiers in Sociology, 7</i>, 886498. <a href="https://doi.org/10.3389/fsoc.2022.886498" target="_blank" rel="noopener">doi.org/10.3389/fsoc.2022.886498</a><span class="aporte">Compara cuatro técnicas con textos cortos de redes sociales.</span></li>
+        <li id="ref-fatima2020">Fatima, S., Desouza, K. C., y Dawson, G. S. (2020). National strategic artificial intelligence plans: A multi-dimensional analysis. <i>Economic Analysis and Policy, 67</i>, 178–194. <a href="https://doi.org/10.1016/j.eap.2020.07.008" target="_blank" rel="noopener">doi.org/10.1016/j.eap.2020.07.008</a><span class="aporte">Analiza 34 planes nacionales de IA: modernización del sector público, datos y algoritmos, gobernanza y capacidades.</span></li>
+        <li id="ref-greene2017">Greene, D., y Cross, J. P. (2017). Exploring the political agenda of the European Parliament using a dynamic topic modeling approach. <i>Political Analysis, 25</i>(1), 77–94. <a href="https://doi.org/10.1017/pan.2016.7" target="_blank" rel="noopener">doi.org/10.1017/pan.2016.7</a><span class="aporte">Sigue la agenda parlamentaria en el tiempo y su respuesta a shocks externos.</span></li>
+        <li id="ref-grimmer2010">Grimmer, J. (2010). A Bayesian hierarchical topic model for political texts: Measuring expressed agendas in Senate press releases. <i>Political Analysis, 18</i>(1), 1–35. <a href="https://doi.org/10.1093/pan/mpp034" target="_blank" rel="noopener">doi.org/10.1093/pan/mpp034</a><span class="aporte">Mide la agenda que expresan los senadores en más de 24 mil comunicados de prensa; el antecedente más directo de este análisis.</span></li>
+        <li id="ref-grimmer2022">Grimmer, J., Roberts, M. E., y Stewart, B. M. (2022). <i>Text as data: A new framework for machine learning and the social sciences</i>. Princeton University Press. <a href="https://press.princeton.edu/books/paperback/9780691207551/text-as-data" target="_blank" rel="noopener">press.princeton.edu/books/paperback/9780691207551/text-as-data</a><span class="aporte">Manual de referencia: usar los tópicos para descubrir es distinto de usarlos para medir.</span></li>
+        <li id="ref-grimmer2013">Grimmer, J., y Stewart, B. M. (2013). Text as data: The promise and pitfalls of automatic content analysis methods for political texts. <i>Political Analysis, 21</i>(3), 267–297. <a href="https://doi.org/10.1093/pan/mps028" target="_blank" rel="noopener">doi.org/10.1093/pan/mps028</a><span class="aporte">Los modelos de texto son incorrectos pero útiles, y hay que validarlos siempre.</span></li>
+        <li id="ref-grootendorst2022">Grootendorst, M. (2022). <i>BERTopic: Neural topic modeling with a class-based TF-IDF procedure</i> (arXiv:2203.05794). arXiv. <a href="https://doi.org/10.48550/arXiv.2203.05794" target="_blank" rel="noopener">doi.org/10.48550/arXiv.2203.05794</a><span class="aporte">Describe el método usado: embeddings, UMAP, HDBSCAN y c-TF-IDF. Es un preprint.</span></li>
+        <li id="ref-humeres2026">Humeres, M., Vega-Poblete, J., Brossi, L., y Valderrama Barragán, M. P. (2026). Inteligencia artificial y género en la prensa chilena. Autoridad epistémica y lenguaje del prestigio. <i>Revista Iberoamericana de Ciencia, Tecnología y Sociedad – CTS, 21</i>(62), 127–155. <a href="https://doi.org/10.35362/issn.1850-0013-1225" target="_blank" rel="noopener">doi.org/10.35362/issn.1850-0013-1225</a><span class="aporte">12.531 noticias sobre IA en cuatro diarios chilenos, 2020–2025; el contrapunto de la prensa comercial.</span></li>
+        <li id="ref-ley21180">Ley N.º 21.180, sobre Transformación Digital del Estado. Ministerio Secretaría General de la Presidencia. <i>Diario Oficial</i>, 11 de noviembre de 2019. <a href="https://www.bcn.cl/leychile/navegar?idNorma=1138479" target="_blank" rel="noopener">www.bcn.cl/leychile/navegar?idNorma=1138479</a><span class="aporte">Promulgada el 25 de octubre de 2019.</span></li>
+        <li id="ref-mcinnes2017">McInnes, L., Healy, J., y Astels, S. (2017). hdbscan: Hierarchical density based clustering. <i>Journal of Open Source Software, 2</i>(11), 205. <a href="https://doi.org/10.21105/joss.00205" target="_blank" rel="noopener">doi.org/10.21105/joss.00205</a><span class="aporte">La implementación de HDBSCAN que usa BERTopic, incluida la selección de grupos por hojas.</span></li>
+        <li id="ref-mcinnes2018">McInnes, L., Healy, J., y Melville, J. (2018). <i>UMAP: Uniform manifold approximation and projection for dimension reduction</i> (arXiv:1802.03426). arXiv. <a href="https://doi.org/10.48550/arXiv.1802.03426" target="_blank" rel="noopener">doi.org/10.48550/arXiv.1802.03426</a><span class="aporte">Reducción de dimensiones que conserva la estructura de vecindad.</span></li>
+        <li id="ref-pnia2021">Ministerio de Ciencia, Tecnología, Conocimiento e Innovación. (2021). <i>Política Nacional de Inteligencia Artificial</i>. Aprobada por el Decreto N.º 20, de 20 de septiembre de 2021 (<i>Diario Oficial</i>, 3 de diciembre de 2021). <a href="https://www.bcn.cl/leychile/navegar?idNorma=1169399" target="_blank" rel="noopener">www.bcn.cl/leychile/navegar?idNorma=1169399</a><span class="aporte">Reemplazada por la actualización de 2024.</span></li>
+        <li id="ref-pnia2024">Ministerio de Ciencia, Tecnología, Conocimiento e Innovación. Decreto N.º 12, de 11 de abril de 2024, que aprueba la actualización de la Política Nacional de Inteligencia Artificial (<i>Diario Oficial</i>, 28 de enero de 2025). <a href="https://www.bcn.cl/leychile/navegar?idNorma=1210664" target="_blank" rel="noopener">www.bcn.cl/leychile/navegar?idNorma=1210664</a></li>
+        <li id="ref-papyshev2023">Papyshev, G., y Yarime, M. (2023). The state’s role in governing artificial intelligence: Development, control, and promotion through national strategies. <i>Policy Design and Practice, 6</i>(1), 79–102. <a href="https://doi.org/10.1080/25741292.2022.2162252" target="_blank" rel="noopener">doi.org/10.1080/25741292.2022.2162252</a><span class="aporte">Combina LDA y lectura de 31 estrategias nacionales: el Estado desarrolla, controla y promueve la IA.</span></li>
+        <li id="ref-porath2014">Porath, W., Suzuki, J.-J., y Ramdohr, T.-M. (2014). Personalization, privatization, and campaign strategies in newspaper coverage of two Chilean presidential elections, 1989–2009. <i>Communication &amp; Society, 27</i>(4), 95–112. <a href="https://doi.org/10.15581/003.27.4.95-112" target="_blank" rel="noopener">doi.org/10.15581/003.27.4.95-112</a><span class="aporte">Mide la personalización en cuatro diarios chilenos durante dos décadas.</span></li>
+        <li id="ref-quinn2010">Quinn, K. M., Monroe, B. L., Colaresi, M., Crespin, M. H., y Radev, D. R. (2010). How to analyze political attention with minimal assumptions and costs. <i>American Journal of Political Science, 54</i>(1), 209–228. <a href="https://doi.org/10.1111/j.1540-5907.2009.00427.x" target="_blank" rel="noopener">doi.org/10.1111/j.1540-5907.2009.00427.x</a><span class="aporte">Mide la atención política como la proporción de textos de cada tópico en el tiempo.</span></li>
+        <li id="ref-rahat2007">Rahat, G., y Sheafer, T. (2007). The personalization(s) of politics: Israel, 1949–2003. <i>Political Communication, 24</i>(1), 65–80. <a href="https://doi.org/10.1080/10584600601128739" target="_blank" rel="noopener">doi.org/10.1080/10584600601128739</a><span class="aporte">Distingue personalización institucional, mediática y del comportamiento de los políticos.</span></li>
+        <li id="ref-reimers2019">Reimers, N., y Gurevych, I. (2019). Sentence-BERT: Sentence embeddings using Siamese BERT-networks. En <i>Proceedings of EMNLP-IJCNLP 2019</i> (pp. 3982–3992). Association for Computational Linguistics. <a href="https://doi.org/10.18653/v1/D19-1410" target="_blank" rel="noopener">doi.org/10.18653/v1/D19-1410</a><span class="aporte">La base de los vectores de oración usados aquí.</span></li>
+        <li id="ref-reimers2020">Reimers, N., y Gurevych, I. (2020). Making monolingual sentence embeddings multilingual using knowledge distillation. En <i>Proceedings of EMNLP 2020</i> (pp. 4512–4525). Association for Computational Linguistics. <a href="https://doi.org/10.18653/v1/2020.emnlp-main.365" target="_blank" rel="noopener">doi.org/10.18653/v1/2020.emnlp-main.365</a><span class="aporte">Cómo se entrenó la versión multilingüe del modelo, que permite trabajar en castellano.</span></li>
+        <li id="ref-rispolo2020">Ríspolo, F. (2020). El campo de la comunicación política: el lugar de la comunicación de gobierno. <i>Postdata, 25</i>(1), 73–98. <a href="https://www.redalyc.org/journal/522/52272877005/html/" target="_blank" rel="noopener">www.redalyc.org/journal/522/52272877005/html/</a><span class="aporte">Discute la tesis de la campaña permanente y lo propio de la comunicación de gobierno.</span></li>
+        <li id="ref-roberts2014">Roberts, M. E., Stewart, B. M., Tingley, D., Lucas, C., Leder-Luis, J., Gadarian, S. K., Albertson, B., y Rand, D. G. (2014). Structural topic models for open-ended survey responses. <i>American Journal of Political Science, 58</i>(4), 1064–1082. <a href="https://doi.org/10.1111/ajps.12103" target="_blank" rel="noopener">doi.org/10.1111/ajps.12103</a><span class="aporte">Modelo de tópicos en que el peso de cada tópico depende de variables como la fecha o el autor.</span></li>
+        <li id="ref-tristan2026">Tristán Jiménez, L., y Lizano Quirós, C. (2026). La IA como noticia: temas y encuadres de la inteligencia artificial en medios digitales costarricenses. <i>Cuadernos.info</i>, (64), 167–188. <a href="https://doi.org/10.7764/cdi.64.98912" target="_blank" rel="noopener">doi.org/10.7764/cdi.64.98912</a><span class="aporte">348 notas de 2022 y 2024: el encuadre pasa de explicativo a centrado en impactos y ética.</span></li>
+        <li id="ref-ulnicane2021">Ulnicane, I., Knight, W., Leach, T., Stahl, B. C., y Wanjiku, W.-G. (2021). Framing governance for a contested emerging technology: Insights from AI policy. <i>Policy and Society, 40</i>(2), 158–177. <a href="https://doi.org/10.1080/14494035.2020.1855800" target="_blank" rel="noopener">doi.org/10.1080/14494035.2020.1855800</a><span class="aporte">49 documentos de política de IA: la gobernanza como encuadre que da al Estado un rol activo.</span></li>
+        <li id="ref-vanaelst2012">Van Aelst, P., Sheafer, T., y Stanyer, J. (2012). The personalization of mediated political communication: A review of concepts, operationalizations and key findings. <i>Journalism, 13</i>(2), 203–220. <a href="https://doi.org/10.1177/1464884911427802" target="_blank" rel="noopener">doi.org/10.1177/1464884911427802</a><span class="aporte">Ordena cómo se ha medido la personalización en los contenidos.</span></li>
+        <li id="ref-wirtz2019">Wirtz, B. W., Weyerer, J. C., y Geyer, C. (2019). Artificial intelligence and the public sector—Applications and challenges. <i>International Journal of Public Administration, 42</i>(7), 596–615. <a href="https://doi.org/10.1080/01900692.2018.1498103" target="_blank" rel="noopener">doi.org/10.1080/01900692.2018.1498103</a><span class="aporte">Diez áreas de aplicación de la IA en el sector público y cuatro dimensiones de desafíos.</span></li>
+        <li id="ref-ying2022">Ying, L., Montgomery, J. M., y Stewart, B. M. (2022). Topics, concepts, and measurement: A crowdsourced procedure for validating topics as measures. <i>Political Analysis, 30</i>(4), 570–589. <a href="https://doi.org/10.1017/pan.2021.33" target="_blank" rel="noopener">doi.org/10.1017/pan.2021.33</a><span class="aporte">Procedimiento para validar que un tópico mide el concepto que se le atribuye.</span></li>
+      </ol>
+    </div>
+    <p class="pie">Código del análisis: <a href="https://github.com/Alcatruz/prensa-institucional" target="_blank" rel="noopener">github.com/Alcatruz/prensa-institucional</a>. Las notas de prensa no se publican en el repositorio.</p>
   </section>
 </main>
 
@@ -406,10 +615,10 @@ button.barra[aria-current="true"] { background: var(--accent-soft); }
   ];
   const marzo = a => a - 0.5 + 70 / 365;
   const EVENTOS = [
-    { x: 2019 - 0.5 + 10.4 / 12, t: "Ley 21.180 de Transformación Digital del Estado (nov. 2019)" },
-    { x: 2021 - 0.5 + 9.9 / 12, t: "Política Nacional de Inteligencia Artificial (oct. 2021)" },
+    { x: 2019 - 0.5 + 10.35 / 12, t: "Ley 21.180 de Transformación Digital del Estado (publicada en nov. 2019)", ref: "ley21180" },
+    { x: 2021 - 0.5 + 8.65 / 12, t: "Política Nacional de Inteligencia Artificial (decreto de sept. 2021)", ref: "pnia2021" },
     { x: 2022 - 0.5 + 10.97 / 12, t: "Lanzamiento de ChatGPT (nov. 2022)" },
-    { x: 2024 - 0.5 + 4.2 / 12, t: "Política de IA actualizada y proyecto de ley de IA (may. 2024)" },
+    { x: 2024 - 0.5 + 3.35 / 12, t: "Actualización de la Política Nacional de IA (decreto de abr. 2024)", ref: "pnia2024" },
   ];
   const TEND = ["cae a menos de la mitad", "cae", "estable", "crece", "se duplica o más"];
   const TCLS = ["t-cae2", "t-cae1", "t-neutro", "t-crece1", "t-crece2"];
@@ -642,7 +851,8 @@ button.barra[aria-current="true"] { background: var(--accent-soft); }
     const ficha = $("#ficha");
     function dibujarFicha() {
       const t = T.get(estado.sel);
-      const notas = estado.notas === "representativas" ? t.representativas : t.recientes;
+      const conNotas = Array.isArray(t.representativas);
+      const notas = !conNotas ? [] : estado.notas === "representativas" ? t.representativas : t.recientes;
       ficha.innerHTML = `
         <p class="sobre">Tópico ${t.id} · ${t.tipo === "autoridad" ? "Agenda de autoridad" : "Tema"}</p>
         <h3>${esc(etiq(t))}</h3>
@@ -666,10 +876,11 @@ button.barra[aria-current="true"] { background: var(--accent-soft); }
         <h4>Ministerios que publican en este tópico</h4>
         <div class="barras" id="ficha-min"></div>
         <div class="sub"><h4>Notas del tópico</h4>
-          <div class="seg" role="group" aria-label="Notas a mostrar">
+          <div class="seg" role="group" aria-label="Notas a mostrar"${conNotas ? "" : " hidden"}>
             <button type="button" data-notas="representativas" aria-pressed="${estado.notas === "representativas"}">Más representativas</button>
             <button type="button" data-notas="recientes" aria-pressed="${estado.notas === "recientes"}">Más recientes</button>
           </div></div>
+        ${conNotas ? "" : '<p class="sin-notas">Esta versión no incluye notas de ejemplo, porque el repositorio no publica el texto de las notas. La versión local que genera la etapa <code>explorador</code> sí las muestra.</p>'}
         <ol class="notas">${notas.map(([f, o, ti, u]) =>
           `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(ti)}</a><span class="meta">${fecha(f)} · ${esc(ORG[o])}</span></li>`).join("")}</ol>`;
       const serie = estado.vista === "cruda" ? t.serie : t.pareja;
@@ -960,7 +1171,7 @@ button.barra[aria-current="true"] { background: var(--accent-soft); }
       vals: iaMil, alto: 230, eventos: EVENTOS, etiqueta: "Notas que nombran la IA por cada mil notas del año",
       tip: i => `<strong>${A[i]}</strong><span>${nfc.format(+iaMil[i].toFixed(2))} por mil · ${n0(D.ia_por_anio[i])} de ${n0(D.notas_por_anio[i])} notas</span>`,
     });
-    $("#ia-eventos").innerHTML = EVENTOS.map(e => `<li>${esc(e.t)}</li>`).join("");
+    $("#ia-eventos").innerHTML = EVENTOS.map(e => `<li>${e.ref ? `<a class="cita" href="#ref-${e.ref}">${esc(e.t)}</a>` : esc(e.t)}</li>`).join("");
     const totIA = D.ia_por_anio.reduce((a, b) => a + b, 0);
     barras($("#ia-topicos"), D.ia_por_topico.slice(0, 11).map(([id, n]) => id < 0
       ? { et: "<em>Sin tópico asignado</em>", v: n, txt: `${n0(n)} · ${pct(100 * n / totIA)}` }
@@ -968,16 +1179,54 @@ button.barra[aria-current="true"] { background: var(--accent-soft); }
     barras($("#ia-min"), D.ministerios.map((m, i) => ({ m, i })).filter(x => x.m.ia > 0).sort((a, b) => b.m.ia - a.m.ia).slice(0, 10)
       .map(({ m }) => ({ et: esc(m.nombre), v: m.ia, txt: `${n0(m.ia)} · ${n1(1000 * m.ia / m.notas)} por mil` })));
 
-    /* ---------------- método ---------------- */
-    $("#metodo-texto").innerHTML = `<ul>
-      <li><strong>Corpus.</strong> ${n0(D.notas_total)} notas de prensa de ${MIN.length} ministerios y sus subsecretarías, extraídas de sus sitios web con el texto completo de cada nota. Las series por año usan ${n0(D.notas)} notas de ${A[0]} a ${A[NA - 1]}; 2026 llega hasta noviembre.</li>
-      <li><strong>Modelo.</strong> BERTopic con representaciones del modelo multilingüe paraphrase-multilingual-MiniLM-L12-v2 sobre el título y el primer párrafo de cada nota. UMAP reduce a 5 dimensiones y HDBSCAN agrupa (selección «leaf», mínimo 40 notas por tópico). Las palabras clave salen de c-TF-IDF sobre las primeras 600 palabras, sin palabras vacías, meses, días, verbos de cita ni palabras que aparecen en más de una de cada cuatro notas.</li>
-      <li><strong>Notas sin tópico.</strong> HDBSCAN deja fuera al ${pct(D.sin_topico_hdbscan)} de las notas. Cada una se asigna a su tópico más parecido si se parece a él al menos tanto como las notas propias del tópico (percentil 25 de su similitud). Quedan sin tópico el ${pct(D.sin_topico)} de las notas de ${A[0]}–${A[NA - 1]}.</li>
-      <li><strong>Etiquetas.</strong> Cada tópico se nombra con sus primeras palabras clave; no son nombres puestos a mano y conviene leer las notas de ejemplo antes de interpretar un tópico.</li>
-      <li><strong>Agenda de autoridad.</strong> Un tópico se marca así cuando su primera palabra clave, o dos de las cuatro primeras, contienen el apellido de un ministro o ministra (2006–2026), de un presidente o de un subsecretario. La regla se revisó a mano, pero puede dejar fuera algún caso.</li>
-      <li><strong>Crecer y caer.</strong> Se compara el promedio anual por mil notas de 2023–2026 con el de 2018–2022, sumando 0,5 a ambos para no exagerar los tópicos pequeños. No todos los ministerios tienen archivo completo desde 2014, así que el período comparable empieza en 2018. La vista «cada ministerio pesa igual» corrige en parte la entrada de fuentes nuevas, como Seguridad Pública y Defensa en 2025–2026.</li>
-      <li><strong>Mapa.</strong> Las posiciones vienen de proyectar a dos dimensiones (UMAP) el centro de cada tópico; la cercanía es aproximada y los ejes no tienen unidades.</li>
-    </ul>`;
+    /* ---------------- cifras del texto ---------------- */
+    const datosTexto = {
+      notas_total: n0(D.notas_total), notas: n0(D.notas), ministerios: n0(MIN.length),
+      fuentes: n0(D.fuentes || (D.organismos || []).length), topicos: n0(D.topicos.length),
+      autoridad: n0(D.topicos.filter(t => t.tipo === "autoridad").length),
+      sin_hdbscan: pct(D.sin_topico_hdbscan), sin_topico: pct(D.sin_topico),
+    };
+    document.querySelectorAll("[data-dato]").forEach(el => { if (datosTexto[el.dataset.dato] != null) el.textContent = datosTexto[el.dataset.dato]; });
+
+    /* ---------------- en breve ---------------- */
+    const topIA = candidatosIA[0];
+    const enTopIA = (D.ia_por_topico.find(([id]) => id === topIA.id) || [0, 0])[1];
+    const ir = t => `<button type="button" class="enlace" data-ir="${t.id}">${esc(etiq(t, 2))}</button>`;
+    const crecen3 = temas.filter(t => t.reciente >= 2).sort((a, b) => b.razon - a.razon).slice(0, 3);
+    const caen3 = temas.filter(t => t.antes >= 2).sort((a, b) => a.razon - b.razon).slice(0, 3);
+    const agenda = [...D.ministerios].sort((a, b) => b.agenda - a.agenda);
+    const pocaAgenda = agenda.filter(m => m.agenda < 1).map(m => m.nombre);
+    $("#breve").innerHTML = [
+      `Sin buscarlo, el modelo encuentra un tópico propio de inteligencia artificial (${ir(topIA)}, ${n0(topIA.notas)} notas): pasa de ${n1(topIA.antes)} a ${n1(topIA.reciente)} notas por mil entre 2018–2022 y 2023–2026, sobre todo en ${esc(minPrincipal(topIA))}.`,
+      `Pero la IA está más repartida que concentrada: de las ${n0(totIA)} notas que la nombran, ${n0(enTopIA)} (${pct(100 * enTopIA / totIA)}) caen en ese tópico; el resto la menciona dentro de otras agendas o queda sin tópico.`,
+      `Entre los tópicos que más crecen están ${crecen3.map(ir).join(", ")}; entre los que más caen, ${caen3.map(ir).join(", ")}.`,
+      `En ${esc(agenda[0].nombre)} (${pct(agenda[0].agenda)}) y ${esc(agenda[1].nombre)} (${pct(agenda[1].agenda)}) la prensa gira en torno a la agenda de la autoridad; en ${esc(pocaAgenda.slice(0, 3).join(", "))} casi no ocurre.`,
+    ].map(x => `<li>${x}</li>`).join("");
+    document.addEventListener("click", e => {
+      const b = e.target.closest("[data-ir]");
+      if (b) seleccionar(+b.dataset.ir, true);
+    });
+
+    /* ---------------- cobertura: notas por ministerio y año ---------------- */
+    const CORTES_COB = [1, 50, 150, 300, 600, 1000, 1500];
+    const claseCob = v => { let c = ""; CORTES_COB.forEach((k, i) => { if (v >= k) c = "s" + (i + 1); }); return c; };
+    const cob = $("#cobertura");
+    cob.style.setProperty("--n", NA);
+    cob.innerHTML = `<div class="fila cab" aria-hidden="true"><span>Ministerio</span>${A.map((a, i) =>
+      `<span>${i === 0 ? a : "’" + String(a).slice(2)}</span>`).join("")}<span style="text-align:right">Notas</span></div>` +
+      D.ministerios.map((m, i) => ({ m, i })).sort((a, b) => b.m.notas - a.m.notas).map(({ m, i }) =>
+        `<div class="fila" data-min="${i}"><span class="et">${esc(m.nombre)}</span>` +
+        m.por_anio.map((v, j) => `<span class="celda ${claseCob(v)}" data-i="${j}"></span>`).join("") +
+        `<span class="n">${n0(m.notas)}</span></div>`).join("");
+    cob.addEventListener("pointermove", e => {
+      const c = e.target.closest(".celda"); if (!c) { ocultarTip(); return; }
+      const m = D.ministerios[+c.closest(".fila").dataset.min], i = +c.dataset.i;
+      mostrarTip(`<strong>${esc(m.nombre)} · ${A[i]}</strong><span>${n0(m.por_anio[i])} notas</span>`, e);
+    });
+    cob.addEventListener("pointerleave", ocultarTip);
+    $("#escala-cob").innerHTML = "<span>Notas en el año:</span>" + CORTES_COB.map((k, i) =>
+      `<span><i class="s${i + 1}"></i>${i === CORTES_COB.length - 1 ? n0(k) + " o más" : n0(k) + "–" + n0(CORTES_COB[i + 1] - 1)}</span>`).join("") +
+      `<span><i style="background:var(--vacio)"></i>sin notas</span>`;
 
     dibujarMapa();
     dibujarFicha();
