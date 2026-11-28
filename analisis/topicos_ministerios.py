@@ -182,6 +182,20 @@ PRENSA = ("señaló indicó afirmó explicó destacó agregó sostuvo comentó m
           "además través así solo sólo hoy ayer año años día días mes meses semana semanas ser hacer puede "
           "pueden cada gran mismo misma parte forma manera tras según junto mediante ello ahora mientras "
           "cual cuales cuál cuáles también tan gracias importante nuevo nueva nuevos nuevas")
+# números escritos, tiempo y palabras de los reportes diarios, que arman n-gramas sin tema ("últimos siete")
+GENERICAS = ("uno una dos tres cuatro cinco seis siete ocho nueve diez once doce quince veinte treinta cien "
+             "mil millón millones primer primera primero primeros primeras segundo segunda tercer tercera "
+             "último última últimos últimas hora horas minutos fecha fechas jornada semana anterior "
+             "menor mayor igual total alcanzando corresponde respectivamente")
+# restos de HTML y de enlaces que quedan en el cuerpo de algunas notas
+HTML = "nbsp amp quot strong span div href src img style class width height target blank http https www html php"
+RE_HTML = re.compile(r"&[a-zA-Z]+;|&#\d+;|<[^>]+>")
+RE_REPETIDA = re.compile(r"\b(\w+)(?:\s+\1\b)+", re.IGNORECASE)
+
+
+def limpiar_rep(t: str) -> str:
+    """Texto para las palabras clave: sin HTML ni palabras repetidas seguidas ("dosis dosis")."""
+    return RE_REPETIDA.sub(r"\1", RE_HTML.sub(" ", t))
 UMBRAL_FD = 0.25        # palabras presentes en más de 1 de cada 4 notas
 
 
@@ -189,7 +203,7 @@ def palabras_vacias(textos) -> list[str]:
     from sklearn.feature_extraction.text import CountVectorizer
     base = [l.strip() for l in open(Path(__file__).with_name("stopwords_es.txt"), encoding="utf-8")
             if l.strip() and not l.startswith("#")]
-    propias = set(f"{MESES} {DIAS} {PRENSA}".split())
+    propias = set(f"{MESES} {DIAS} {PRENSA} {GENERICAS} {HTML}".split())
     cv = CountVectorizer(stop_words=base, token_pattern=r"(?u)\b[^\W\d_]{3,}\b", binary=True, min_df=50)
     x = cv.fit_transform(textos)
     fd = np.asarray(x.sum(0)).ravel() / x.shape[0]
@@ -233,7 +247,7 @@ def modelar(min_cluster=40, min_samples=10, percentil_ruido=25):
 
     d = pd.read_parquet(DOCS, columns=["texto_rep"])
     emb = np.load(EMB)
-    docs = d.texto_rep.tolist()
+    docs = [limpiar_rep(t) for t in d.texto_rep]
     sw = palabras_vacias(docs)
     modelo = BERTopic(
         language="multilingual",   # con "english" BERTopic borra tildes y eñes antes de contar palabras
@@ -284,8 +298,23 @@ RE_IA = re.compile(
 DESDE, ANTES, RECIENTE = 2014, (2018, 2022), (2023, 2026)
 
 
+def palabras_clave(palabras: str) -> list[str]:
+    """Palabras clave sin los bigramas de una palabra repetida ("dosis dosis"), que el vectorizador arma
+    al saltar las vacías ("dosis de dosis")."""
+    return [p for p in palabras.split(", ") if len(set(p.split())) == len(p.split())]
+
+
 def etiqueta(palabras: str, n=4) -> str:
-    return " · ".join(palabras.split(", ")[:n])
+    """Primeras palabras clave que no repiten una palabra ya dicha ("dosis · dosis refuerzo")."""
+    usadas, salida = set(), []
+    for p in palabras_clave(palabras):
+        if set(p.split()) & usadas:
+            continue
+        salida.append(p)
+        usadas |= set(p.split())
+        if len(salida) == n:
+            break
+    return " · ".join(salida)
 
 
 PARTICULAS = {"de", "del", "la", "las", "los", "van", "von", "san", "santa", "y"}
@@ -592,7 +621,7 @@ def explorador(n_rep=5, n_rec=5):
                            "a": gr[gr.anio.between(*ANTES)].ministerio.value_counts(),
                            "r": gr[gr.anio.between(*RECIENTE)].ministerio.value_counts()}).fillna(0).astype(int)
         topicos.append({
-            "id": t, "palabras": info.palabras[t].split(", "),
+            "id": t, "palabras": palabras_clave(info.palabras[t]),
             "tipo": "autoridad" if r.tipo == "agenda de autoridad" else "tema",
             "notas": int(len(pos)), "ia": int(g.ia.sum()), "pct_ia": float(r.pct_ia),
             "x": round(float(xy[k, 0]), 4), "y": round(float(xy[k, 1]), 4),
