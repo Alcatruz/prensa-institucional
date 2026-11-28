@@ -548,7 +548,6 @@ def figuras():
 
 # ---------------------------------------------------------------- explorador
 EXPLORADOR = SALIDA / "explorador"
-WEB = RAIZ / "docs"         # página pública (GitHub Pages): solo resultados agregados
 PLANTILLA = Path(__file__).resolve().parent / "explorador_topicos.html"
 MARCA_DATOS = '<script id="datos" type="application/json"></script>'
 DESCRIPCION = ("Modelo de tópicos (BERTopic) sobre la prensa de los ministerios de Chile, 2014-2026: "
@@ -665,15 +664,7 @@ def explorador(n_rep=5, n_rec=5):
     texto = json.dumps(datos, ensure_ascii=False, separators=(",", ":"))
     (EXPLORADOR / "datos.json").write_text(texto, encoding="utf-8")
     pagina(EXPLORADOR / "index.html", texto)
-    # versión pública: sin notas de ejemplo ni nombres de organismos (no se publica el texto de las notas)
-    publico = {k: v for k, v in datos.items() if k != "organismos"}
-    publico["topicos"] = [{k: v for k, v in t.items() if k not in ("representativas", "recientes")} for t in topicos]
-    WEB.mkdir(exist_ok=True)
-    texto_pub = json.dumps(publico, ensure_ascii=False, separators=(",", ":"))
-    (WEB / "datos.json").write_text(texto_pub, encoding="utf-8")
-    pagina(WEB / "index.html")
     print(f"{len(topicos)} tópicos, {len(texto) / 1e6:.1f} MB de datos:", EXPLORADOR / "index.html")
-    print(f"Versión pública ({len(texto_pub) / 1e6:.2f} MB de datos):", WEB / "index.html")
 
 
 if __name__ == "__main__":

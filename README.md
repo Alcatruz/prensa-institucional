@@ -378,7 +378,7 @@ python analisis/topicos_ministerios.py embeber    # embeddings (unos 50 minutos 
 python analisis/topicos_ministerios.py modelar    # UMAP + HDBSCAN + c-TF-IDF (BERTopic)
 python analisis/topicos_ministerios.py analizar   # tópicos por año y por ministerio
 python analisis/topicos_ministerios.py figuras
-python analisis/topicos_ministerios.py explorador # página HTML para recorrer los tópicos
+python analisis/topicos_ministerios.py explorador # datos agregados de los tópicos y página local para recorrerlos
 ```
 
 Decisiones del modelo:
@@ -395,12 +395,7 @@ La comparación entre períodos usa notas de cada tópico por cada mil notas del
 
 ![Notas ministeriales organizadas en torno a una autoridad](figuras/agenda_autoridades.png)
 
-La etapa `explorador` escribe dos versiones de una página que explica el método paso a paso (embeddings, UMAP, HDBSCAN, c-TF-IDF, medición en el tiempo, agenda de autoridad y diccionario de IA), con referencias a la literatura, y muestra los resultados para explorarlos: cobertura de notas por ministerio y año, mapa de tópicos con la ficha de cada uno, mapa de árbol de todos los tópicos por ministerio (con selector de período), los tópicos que más crecen y caen, el perfil de cada ministerio y dónde aparecen las notas que nombran la IA.
-
-- `docs/index.html`, versionada y lista para GitHub Pages (carpeta `docs/` de la rama `main`). Lee `docs/datos.json`, que solo trae resultados agregados (palabras clave, series por año y conteos por ministerio), sin texto, títulos ni enlaces de notas. Para verla en local hay que servir la carpeta, por ejemplo con `python -m http.server --directory docs`.
-- `data/topicos_ministerios/explorador/index.html`, no versionada, con los datos incrustados y notas de ejemplo de cada tópico; se abre con doble clic.
-
-La plantilla de ambas es `analisis/explorador_topicos.html`.
+La etapa `explorador` escribe `data/topicos_ministerios/explorador/datos.json`, con los resultados agregados de cada tópico y ministerio, y una página local para recorrerlos (`index.html` en la misma carpeta, con los datos incrustados; se abre con doble clic). La plantilla de la página es `analisis/explorador_topicos.html`. El análisis publicado de este corpus está en [prensa-estado-ia](https://github.com/Alcatruz/prensa-estado-ia), que lee ese `datos.json`.
 
 Los resultados intermedios (embeddings, modelo, tablas y explorador) quedan en `data/topicos_ministerios/`, que no se versiona.
 
@@ -431,14 +426,11 @@ scrapers/
 analisis/
   topicos_ministerios.py         tópicos de la prensa ministerial y su evolución (BERTopic)
   stopwords_es.txt               palabras vacías del español (NLTK + Snowball)
-  explorador_topicos.html        plantilla de la página de tópicos (docs/ y versión local)
+  explorador_topicos.html        plantilla de la página local de tópicos
 figuras/
   cobertura.py                   genera cobertura.png
   topicos_ministerios.png        tópicos que aparecen y desaparecen (analisis/topicos_ministerios.py)
   agenda_autoridades.png         notas centradas en una autoridad, por ministerio
-docs/
-  index.html                     página del análisis de tópicos (GitHub Pages)
-  datos.json                     resultados agregados que lee la página
 data/                            salida de los scrapers (no versionada)
   sujetos/                       notas de los sitios del catálogo de sujetos obligados
 ```
