@@ -395,7 +395,7 @@ La comparación entre períodos usa notas de cada tópico por cada mil notas del
 
 ![Notas ministeriales organizadas en torno a una autoridad](figuras/agenda_autoridades.png)
 
-La etapa `explorador` escribe `data/topicos_ministerios/explorador/datos.json`, con los resultados agregados de cada tópico y ministerio, y una página local para recorrerlos (`index.html` en la misma carpeta, con los datos incrustados; se abre con doble clic). La plantilla de la página es `analisis/explorador_topicos.html`. El análisis publicado de este corpus está en [prensa-estado-ia](https://github.com/Alcatruz/prensa-estado-ia), que lee ese `datos.json`.
+La etapa `explorador` escribe `data/topicos_ministerios/explorador/datos.json`, con los resultados agregados de cada tópico y ministerio, y una página local para recorrerlos (`index.html` en la misma carpeta, con los datos incrustados; se abre con doble clic). La plantilla de la página es `analisis/explorador_topicos.html`. El análisis publicado de este corpus está en [prensa-estado-ia](https://github.com/Alcatruz/prensa-estado-ia).
 
 Los resultados intermedios (embeddings, modelo, tablas y explorador) quedan en `data/topicos_ministerios/`, que no se versiona.
 
